@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Scale Interface</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>Scale Interface</h1>
+    <button id="tareButton">Tare Scale</button>
+    <button id="setMinWeightButton">Set Minimum Weight</button>
+    <button id="setTrackingDurationButton">Set Tracking Duration</button>
+    <p>Current Weight: <span id="currentWeight">0 kg</span></p>
+    <p>Peak Weight: <span id="peakWeight">0 kg</span></p>
+    <p>Average Weight: <span id="avgWeight">0 kg</span></p>
+    <p>Elapsed Time: <span id="elapsedTime">0 s</span></p>
+    <canvas id="weightChart" width="300" height="100"></canvas>
+
+    <script>
+        let weightChart;
+        let labels = [];
+        let dataPoints = [];
+        const delayBetweenPoints = 0;
+        
+        const previousY = (ctx) => ctx.index === 0 ? ctx.chart.scales.y.getPixelForValue(5) : ctx.chart.getDatasetMeta(ctx.datasetIndex).data[ctx.index - 1].getProps(['y'], true).y;
+
+        const animation = {
+            x: {
+                type: 'number',
+                easing: 'linear',
+                duration: delayBetweenPoints,
+                from: NaN, // the point is initially skipped
+                delay(ctx) {
+                    if (ctx.type !== 'data' || ctx.xStarted) {
+                        return 0;
+                    }
+                    ctx.xStarted = true;
+                    return ctx.index * delayBetweenPoints;
+                }
+            },
+            y: {
+                type: 'number',
+                easing: 'linear',
+                duration: delayBetweenPoints,
+                from: previousY,
+                delay(ctx) {
+                    if (ctx.type !== 'data' || ctx.yStarted) {
+                        return 0;
+                    }
+                    ctx.yStarted = true;
+                    return ctx.index * delayBetweenPoints;
+                }
+            }
+        };        
+        
+        $(document).ready(function () {
+            const ctx = document.getElementById('weightChart').getContext('2d');
+            weightChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Weight (kg)',
+                        data: dataPoints,
+                        fill: false,
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.2,
+                        pointRadius: 5
+                    }]
+                },
+                options: {
+                    animation: animation,
+                //    animations:{
+               //         duration: 0,
+                  //      easing: 'easeOutCirc',
+                        
+                  //      delay: 0
+                  //  },
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            suggestedMax: 7,
+                            position: 'bottom',
+                            title: {
+                                display: true,
+                                text: 'Elapsed Time (s)'
+                            }//,
+                        //    ticks: {
+                        //        stepSize: 50, // Set initial step size
+                        //        min: 0
+                            //}
+                            
+                        },
+                        y: {
+                            beginAtZero: true,
+                            suggestedMax: 40,
+                            from: previousY,
+                            title: {
+                                display: true,
+                                text: 'Weight (kg)'
+                            }
+                        }
+                    }
+                }
+            });
+
+            setInterval(updateData, 40);
+
+            $('#tareButton').click(function () {
+                $.post('/tare', function (data) {
+                    alert(data.message);
+                });
+            });
+
+            $('#setMinWeightButton').click(function () {
+                const minWeight = prompt('Enter minimum weight (kg):');
+                if (minWeight !== null) {
+                    $.ajax({
+                        url: '/set_min_weight',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({min_weight: parseFloat(minWeight)}),
+                        success: function (data) {
+                            alert('Minimum weight set to ' + data.min_weight + ' kg');
+                        }
+                    });
+                }
+            });
+
+            $('#setTrackingDurationButton').click(function () {
+                const trackingDuration = prompt('Enter tracking duration (seconds):');
+                if (trackingDuration !== null) {
+                    $.ajax({
+                        url: '/set_tracking_duration',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({tracking_duration: parseFloat(trackingDuration)}),
+                        success: function (data) {
+                            alert('Tracking duration set to ' + data.tracking_duration + ' seconds');
+                        }
+                    });
+                }
+            });
+        });
+        
+        
+
+        function updateData() {
+            $.get('/data', function (data) {
+                $('#currentWeight').text(data.weight + ' kg');
+                $('#peakWeight').text(data.peak_weight + ' kg');
+                $('#avgWeight').text(data.avg_weight + ' kg');
+                $('#elapsedTime').text(data.elapsed_time + ' s');
+
+                if (data.clear_chart) {
+                    labels = [];
+                    dataPoints = [];
+                    xScaleValue = 5; // Reset x scale value                   
+                }
+
+                if (data.tracking) {
+                    if (labels.length > 0) {
+                        xScaleValue += 3; // Increment x scale value by 5 seconds
+                    }
+                    labels.push(data.elapsed_time);
+                    dataPoints.push(data.weight);
+
+                    weightChart.data.labels = labels;
+                    weightChart.data.datasets[0].data = dataPoints;
+
+                    const suggestedMax = data.peak_weight + 10;
+                    weightChart.options.scales.y.suggestedMax = suggestedMax;
+                    weightChart.update();
+                }
+            });
+        } 
+    </script>
+</body>
+</html>
