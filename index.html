@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Scale Interface</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
@@ -18,11 +19,13 @@
     <canvas id="weightChart" width="300" height="100"></canvas>
 
     <script>
+        const socket = io.connect('http://' + document.domain + ':' + location.port);
+
         let weightChart;
         let labels = [];
         let dataPoints = [];
         const delayBetweenPoints = 0;
-        
+
         const previousY = (ctx) => ctx.index === 0 ? ctx.chart.scales.y.getPixelForValue(5) : ctx.chart.getDatasetMeta(ctx.datasetIndex).data[ctx.index - 1].getProps(['y'], true).y;
 
         const animation = {
@@ -52,8 +55,8 @@
                     return ctx.index * delayBetweenPoints;
                 }
             }
-        };        
-        
+        };
+
         $(document).ready(function () {
             const ctx = document.getElementById('weightChart').getContext('2d');
             weightChart = new Chart(ctx, {
@@ -71,12 +74,6 @@
                 },
                 options: {
                     animation: animation,
-                //    animations:{
-               //         duration: 0,
-                  //      easing: 'easeOutCirc',
-                        
-                  //      delay: 0
-                  //  },
                     scales: {
                         x: {
                             type: 'linear',
@@ -85,17 +82,11 @@
                             title: {
                                 display: true,
                                 text: 'Elapsed Time (s)'
-                            }//,
-                        //    ticks: {
-                        //        stepSize: 50, // Set initial step size
-                        //        min: 0
-                            //}
-                            
+                            }
                         },
                         y: {
                             beginAtZero: true,
                             suggestedMax: 40,
-                            from: previousY,
                             title: {
                                 display: true,
                                 text: 'Weight (kg)'
@@ -105,49 +96,11 @@
                 }
             });
 
-            setInterval(updateData, 40);
-
-            $('#tareButton').click(function () {
-                $.post('/tare', function (data) {
-                    alert(data.message);
-                });
+            socket.on('connect', function () {
+                console.log('Connected to server');
             });
 
-            $('#setMinWeightButton').click(function () {
-                const minWeight = prompt('Enter minimum weight (kg):');
-                if (minWeight !== null) {
-                    $.ajax({
-                        url: '/set_min_weight',
-                        type: 'POST',
-                        contentType: 'application/json',
-                        data: JSON.stringify({min_weight: parseFloat(minWeight)}),
-                        success: function (data) {
-                            alert('Minimum weight set to ' + data.min_weight + ' kg');
-                        }
-                    });
-                }
-            });
-
-            $('#setTrackingDurationButton').click(function () {
-                const trackingDuration = prompt('Enter tracking duration (seconds):');
-                if (trackingDuration !== null) {
-                    $.ajax({
-                        url: '/set_tracking_duration',
-                        type: 'POST',
-                        contentType: 'application/json',
-                        data: JSON.stringify({tracking_duration: parseFloat(trackingDuration)}),
-                        success: function (data) {
-                            alert('Tracking duration set to ' + data.tracking_duration + ' seconds');
-                        }
-                    });
-                }
-            });
-        });
-        
-        
-
-        function updateData() {
-            $.get('/data', function (data) {
+            socket.on('response_data', function (data) {
                 $('#currentWeight').text(data.weight + ' kg');
                 $('#peakWeight').text(data.peak_weight + ' kg');
                 $('#avgWeight').text(data.avg_weight + ' kg');
@@ -156,7 +109,7 @@
                 if (data.clear_chart) {
                     labels = [];
                     dataPoints = [];
-                    xScaleValue = 5; // Reset x scale value                   
+                    xScaleValue = 5; // Reset x scale value
                 }
 
                 if (data.tracking) {
@@ -174,7 +127,41 @@
                     weightChart.update();
                 }
             });
-        } 
+
+            socket.on('min_weight_set', function (data) {
+                alert('Minimum weight set to ' + data.min_weight + ' kg');
+            });
+
+            socket.on('tracking_duration_set', function (data) {
+                alert('Tracking duration set to ' + data.tracking_duration + ' seconds');
+            });
+
+            socket.on('tared', function (data) {
+                alert(data.message);
+            });
+
+            $('#tareButton').click(function () {
+                socket.emit('tare');
+            });
+
+            $('#setMinWeightButton').click(function () {
+                const minWeight = prompt('Enter minimum weight (kg):');
+                if (minWeight !== null) {
+                    socket.emit('set_min_weight', { min_weight: parseFloat(minWeight) });
+                }
+            });
+
+            $('#setTrackingDurationButton').click(function () {
+                const trackingDuration = prompt('Enter tracking duration (seconds):');
+                if (trackingDuration !== null) {
+                    socket.emit('set_tracking_duration', { tracking_duration: parseFloat(trackingDuration) });
+                }
+            });
+
+            setInterval(function () {
+                socket.emit('request_data');
+            }, 40);
+        });
     </script>
 </body>
 </html>
