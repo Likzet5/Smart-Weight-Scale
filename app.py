@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, render_template, request
+from flask_socketio, SocketIO, emit
 import time
 import threading
 from collections import deque
@@ -6,6 +7,7 @@ from hx711_custom import HX711Custom
 import numpy as np
 
 app = Flask(__name__)
+socketio = SocketIO(app)
 
 # Initialize the scale
 scale = HX711Custom(dout_pin=5, pd_sck_pin=6)
@@ -93,8 +95,17 @@ thread.start()
 def index():
     return render_template('index.html')
 
-@app.route('/data')
-def get_data():
+@socketio.on('connect')
+def handle_connect():
+    print('Client connected')
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    print('Client disconnected')
+
+
+@socketio.on('request_data')
+def handle_request_data():
     global weights, peak_weight, start_time, current_weight
     avg_weight = round(sum(weights) / len(weights) / 1000, 1) if weights else 0
     elapsed_time = round(time.time() - start_time, 2) if start_time and tracking else 0
@@ -106,35 +117,36 @@ def get_data():
         'tracking': tracking,
         'clear_chart': len(weights) == 1  # Clear chart if only one weight entry (new tracking started)
     }
-    return jsonify(response)
+    emit('response_data', response)
 
-@app.route('/set_min_weight', methods=['POST'])
-def set_min_weight():
+@socketio.on('set_min_weight')
+def handle_set_min_weight(json):
     global min_weight
     data = request.get_json()
     min_weight = float(data['min_weight'])
-    return jsonify({'status': 'success', 'min_weight': min_weight})
+    emit('min_weight_set', {'status': 'success', 'min_weight': min_weight})
 
-@app.route('/set_tracking_duration', methods=['POST'])
-def set_tracking_duration():
+@socketio.on('set_tracking_duration')
+def handle_set_tracking_duration(json):
     global tracking_duration
     data = request.get_json()
     tracking_duration = float(data['tracking_duration'])
-    return jsonify({'status': 'success', 'tracking_duration': tracking_duration})
+    emit('tracking_duration_set', {'status': 'success', 'tracking_duration': tracking_duration})
 
-@app.route('/tare', methods=['POST'])
-def tare():
+@socketio.on('tare')
+def handle_tare():
     scale.tare()
-    return jsonify({'status': 'success', 'message': 'Scale tared'})
+    emit('tared', {'status': 'success', 'message': 'Scale tared'})
 
-@app.route('/is_calibrated')
-def is_calibrated():
-    return jsonify({'calibrated': scale.is_calibrated()})
+@socketio.on('is_calibrated')
+def handle_is_calibrated():
+    emit('calibration_status', {'calibrated': scale.is_calibrated()})
 
 if __name__ == '__main__':
     try:
         # Use 'localhost' or '127.0.0.1' for testing
-        app.run(host='192.168.1.41', port=5000)
+        # app.run(host='192.168.1.41', port=5000)
+        socketio.run(app, host='192.168.1.41', port=5000)
     except (KeyboardInterrupt, SystemExit):
         print('Bye :)')
     finally:
