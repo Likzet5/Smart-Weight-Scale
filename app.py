@@ -1,10 +1,12 @@
 from flask import Flask, jsonify, render_template, request
-from flask_socketio, SocketIO, emit
+from flask_socketio import SocketIO, emit
 import time
 import threading
 from collections import deque
 from hx711_custom import HX711Custom
 import numpy as np
+import psutil
+
 
 app = Flask(__name__)
 socketio = SocketIO(app)
@@ -23,6 +25,10 @@ min_weight = 500  # Default minimum weight to start the timer
 current_weight = 1
 raw_weights = deque(maxlen=1000)  # A larger buffer to hold raw data for filtering
 
+def print_memory_usage():
+    process = psutil.Process()
+    print(f"Memory Usage: {process.memory_info().rss / 1024 ** 2:.2f} MB")
+
 
 def rolling_median_filter(data, window_size):
     if len(data) < window_size:
@@ -35,57 +41,67 @@ def rolling_median_filter(data, window_size):
 
 def read_sensor():
     global peak_weight, start_time, tracking, tracking_duration, current_weight, off_time
-
-    window_size = 3  # Window size for the median filter
+    window_size = 3
+    last_emit_time = 0
+    emit_interval = 0.025  # seconds
 
     while True:
+        print_memory_usage()
         try:
             weight = scale.get_weight()
-            if weight == False or weight < 0: # or (current_weight / weight < 0 or weight / current_weight > 2 and tracking): #
-                print("AYAYAYAY justerad" + str(weight))
+            if weight is False or weight < 0:
                 weight = current_weight
-                
-            current_weight = weight  # Update current weight
 
-            if weight is not None:             
-                
+            current_weight = weight
+
+            if weight is not None:
                 raw_weights.append(weight)
                 smoothed_weight = rolling_median_filter(raw_weights, window_size)
                 if np.abs(weight - smoothed_weight) > 3 * np.std(raw_weights):
-                    print("rejected" + str(weight))
-                    # Reject the outlier
                     continue
-                
-                
+
                 if smoothed_weight > min_weight and (time.time() - off_time > 2):
                     if not tracking:
                         off_time = 0
                         tracking = True
-                        weights.clear()  # Clear previous weights
+                        weights.clear()
                         peak_weight = 0
                         start_time = time.time()
-                        # tracking_duration = None  # Reset tracking duration
-                        print("Tracking started")
 
                     weights.append(weight)
 
                     if smoothed_weight > peak_weight:
-                        peak_weight = smoothed_weight #weight
-                    if ((time.time() - start_time > tracking_duration) and tracking_duration != 0):
-                        #if tracking and tracking_duration and (time.time() - start_time >= tracking_duration):
+                        peak_weight = smoothed_weight
+
+                    if (time.time() - start_time > tracking_duration) and tracking_duration != 0:
                         tracking = False
-                        start_time = 0  # Reset the start time when tracking stops
+                        start_time = 0
                         if off_time == 0:
                             off_time = time.time()
-                        print("2 Tracking stopped due to timer " + str(weight) + " " + str(time.time()))
+
                 else:
-                    
                     tracking = False
-                    start_time = 0  # Reset the start time when tracking stops
-                    print("Tracking stopped due to timer " + str(weight) + " " + str(time.time()) + "\n")
+                    start_time = 0
+
+                # Emit data at intervals
+                current_time = time.time()
+                if current_time - last_emit_time >= emit_interval:
+                    last_emit_time = current_time
+                    avg_weight = round(sum(weights) / len(weights) / 1000, 1) if weights else 0
+                    elapsed_time = round(time.time() - start_time, 2) if start_time and tracking else 0
+                    response = {
+                        'weight': round(current_weight / 1000, 1),
+                        'peak_weight': round(peak_weight / 1000, 1),
+                        'avg_weight': avg_weight,
+                        'elapsed_time': elapsed_time,
+                        'tracking': tracking,
+                        'clear_chart': len(weights) == 1
+                    }
+                    socketio.emit('response_data', response)
+                    
         except ValueError as e:
             print(f"Error reading weight: {e}")
-        time.sleep(0.040)  # Reduce sleep interval for more frequent updates
+        time.sleep(emit_interval)  # Adjust the sleep interval as needed
 
 thread = threading.Thread(target=read_sensor)
 thread.daemon = True
