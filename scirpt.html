@@ -1,0 +1,40 @@
+<button type="button" onclick="connect()">Connect</button>
+
+<script>
+    const PRIMARY_SERVICE_UUID = '0000181a-0000-1000-8000-00805f9b34fb';
+
+    const NOTIFICATION_CHARACTERISTIC_UUID =
+        '0000181a-0000-1000-8000-00805f9b34fb';
+
+    async function connect() {
+        const device = await navigator.bluetooth.requestDevice({
+            acceptAllDevices: true,
+            optionalServices: [PRIMARY_SERVICE_UUID],
+        });
+
+        const server = await device.gatt.connect();
+
+        const service = await server.getPrimaryService(PRIMARY_SERVICE_UUID);
+
+        const characteristic = await primaryService.getCharacteristic(
+            NOTIFICATION_CHARACTERISTIC_UUID
+        );
+
+        await characteristic.startNotifications();
+
+        const handleValueChanged = (e) => {
+            const sensorOneTemp = characteristic.value.getUint16(2) / 10;
+            const sensorTwoTemp = characteristic.value.getUint16(4) / 10;
+
+            console.clear();
+            console.log('characteristicvaluechanged');
+            console.log('#1', sensorOneTemp);
+            console.log('#2', sensorTwoTemp);
+        };
+
+        characteristic.addEventListener(
+            'characteristicvaluechanged',
+            handleValueChanged
+        );
+    }
+</script>
