@@ -47,7 +47,7 @@ limitations under the License.
 
   <body>
     <img class="pageIcon" src="icon.png">
-    <h1>Web Bluetooth / Notifications Sample 4</h1>
+    <h1>Web Bluetooth / Notifications Sample 5</h1>
     <p class="availability">
       Available in <a target="_blank" href="https://www.chromestatus.com/feature/5264933985976320">Chrome 48+</a> |
       <a target="_blank" href="https://github.com/googlechrome/samples/blob/gh-pages/web-bluetooth/notifications.html">View on GitHub</a> |
@@ -439,7 +439,7 @@ function handleNotifications(event) {
   */
   for (let i = 0; i < value.byteLength; i++) {
   log(value.getUint8(i));
-  log(parseInt(value.getUint8(i), 16));
+  log(parseInt(value, 16));
   a.push(('00' + value.getUint8(i).toString(16)).slice(-2));
   }
   log('> ' + a.join(' '));
