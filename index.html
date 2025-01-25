@@ -438,7 +438,7 @@ function handleNotifications(event) {
   log('> ' + a.join(' '));
   */
   for (let i = 0; i < value.byteLength; i++) {
-  a.push(('00' + value.getUint8(i).toString(16)).slice(-2));
+  a.push(('00' + value.i.toString(16)).slice(-2));
   }
   log('> ' + a.join(' '));
 }
