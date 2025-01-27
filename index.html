@@ -93,8 +93,8 @@
         device.ongattserverdisconnected = handleDisconnect; // Assigning the disconnect handler
 
         //Add mtu size upgrade here
-        await device.requestMtu(256);
-        await device.onMtuChanged()
+        await device.gatt.requestMtu(256);
+        await device.gatt.onMtuChanged()
 
         log('Connected to ' + device.name);
 
