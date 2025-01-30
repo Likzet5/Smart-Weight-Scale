@@ -69,8 +69,8 @@
           return;
         }
                 //Add mtu size upgrade here
-        device.gatt.requestMtu(250);
-        await device.gatt.onMtuChanged()
+        device.requestMtu(250);
+        await device.onMtuChanged()
 
         device = await navigator.bluetooth.requestDevice({
           filters: [{ name: 'Weight'} 
