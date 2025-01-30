@@ -78,11 +78,6 @@
         log('Connecting to GATT Server...');
         const server = await device.gatt.connect();
 
-                        //Add mtu size upgrade here
-        //MTUSIZE = await server.requestMtu(250);
-        //log(MTUSIZE);
-        //await server.onMtuChanged();
-
         log('Getting Serial Service...');
         const service = await server.getPrimaryService('6e400001-b5a3-f393-e0a9-e50e24dcca9e');
 
@@ -91,6 +86,10 @@
 
         log('Getting Serial Port Read Characteristic...');
         readCharacteristic = await service.getCharacteristic('6e400003-b5a3-f393-e0a9-e50e24dcca9e');
+
+        //Add mtu size upgrade here
+        await device.gatt.requestMtu(250);
+        await device.gatt.onMtuChanged()
 
         log('Enabling notifications...');
         await readCharacteristic.startNotifications();
