@@ -68,6 +68,9 @@
           log('Already connected to ' + device.name);
           return;
         }
+                //Add mtu size upgrade here
+        device.gatt.requestMtu(250);
+        await device.gatt.onMtuChanged()
 
         device = await navigator.bluetooth.requestDevice({
           filters: [{ name: 'Weight'} 
@@ -92,10 +95,6 @@
         readCharacteristic.addEventListener('characteristicvaluechanged', handleData);
 
         device.ongattserverdisconnected = handleDisconnect; // Assigning the disconnect handler
-
-        //Add mtu size upgrade here
-        await device.gatt.requestMtu(250);
-        await device.gatt.onMtuChanged()
 
         log('Connected to ' + device.name);
 
