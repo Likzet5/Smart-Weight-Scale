@@ -45,6 +45,7 @@
     <br><br>
     <input type="text" id="messageInput" class="input-field" placeholder="Enter message">
     <button class="button" onclick="sendMessage()">Send Message</button>
+    <button class="button" onclick="LED()">Toggle LED</button>
     <br><br>
     <pre id="log"></pre>
   </div>
@@ -140,6 +141,21 @@
         log('Error: ' + error);
       }
     }
+
+    async function LED() {
+      try {
+        const messageInput = 'toggle';
+        const message = messageInput.value;
+        const encoder = new TextEncoder('utf-8');
+        const data = encoder.encode(message);
+        await writeCharacteristic.writeValue(data);
+        log('Sent: ' + message);
+        messageInput.value = '';
+      } catch (error) {
+        log('Error: ' + error);
+      }
+    }
+      
   </script>
 </body>
 </html>
