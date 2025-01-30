@@ -79,8 +79,8 @@
         const server = await device.gatt.connect();
 
                         //Add mtu size upgrade here
-        MTUSIZE = await server.requestMtu(250);
-        log(MTUSIZE);
+        //MTUSIZE = await server.requestMtu(250);
+        //log(MTUSIZE);
         //await server.onMtuChanged();
 
         log('Getting Serial Service...');
