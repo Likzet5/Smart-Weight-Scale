@@ -68,9 +68,6 @@
           log('Already connected to ' + device.name);
           return;
         }
-                //Add mtu size upgrade here
-        device.requestMtu(250);
-        await device.onMtuChanged()
 
         device = await navigator.bluetooth.requestDevice({
           filters: [{ name: 'Weight'} 
@@ -80,6 +77,11 @@
 
         log('Connecting to GATT Server...');
         const server = await device.gatt.connect();
+
+                        //Add mtu size upgrade here
+        MTUSIZE = server.requestMtu(250);
+        log(MTUSIZE);
+        await server.onMtuChanged();
 
         log('Getting Serial Service...');
         const service = await server.getPrimaryService('6e400001-b5a3-f393-e0a9-e50e24dcca9e');
