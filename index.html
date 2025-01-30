@@ -79,7 +79,7 @@
         const server = await device.gatt.connect();
 
                         //Add mtu size upgrade here
-        MTUSIZE = server.requestMtu(250);
+        MTUSIZE = await server.requestMtu(250);
         log(MTUSIZE);
         //await server.onMtuChanged();
 
