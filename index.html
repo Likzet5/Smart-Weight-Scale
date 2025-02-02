@@ -89,8 +89,8 @@
         readCharacteristic = await service.getCharacteristic('6e400003-b5a3-f393-e0a9-e50e24dcca9e');
 
         //Add mtu size upgrade here
-        await device.gatt.requestMtu(250);
-        await device.gatt.onMtuChanged()
+        //await device.gatt.requestMtu(250);
+        //await device.gatt.onMtuChanged()
 
         log('Enabling notifications...');
         await readCharacteristic.startNotifications();
