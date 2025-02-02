@@ -269,7 +269,7 @@
       const decoder = new TextDecoder('utf-8');
       const data = decoder.decode(value);
       stringB = "C "
-      if ( stringB.indexOf( data ) > -1 ) { // String B contains String A
+      if ( data.indexOf( stringB ) > -1 ) { // String B contains String A
         log('Weight: ' + data);
         }
       else{
