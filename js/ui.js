@@ -25,6 +25,9 @@ export class UI {
     this.connectionStatus = document.getElementById('connection-status');
     this.deviceName = document.getElementById('device-name');
     this.errorMessage = document.getElementById('error-message');
+
+    this.calibrationWeightInput = document.getElementById('calibration-weight');
+    this.calibrateBtn = document.getElementById('calibrate-button');
     
     // Force display
     this.currentForceEl = document.getElementById('current-force');
@@ -190,6 +193,8 @@ export class UI {
     this.connectBtn.disabled = activeConnection;
     this.disconnectBtn.disabled = !this.connected;
     this.tareBtn.disabled = !this.connected;
+
+    this.calibrateBtn.disabled = !this.connected || this.recording;
     
     // Recording buttons
     this.startRecordingBtn.disabled = !activeConnection || this.recording;
