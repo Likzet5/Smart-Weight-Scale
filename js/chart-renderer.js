@@ -24,7 +24,9 @@ export class ChartRenderer {
       showTargetLine: false,
       targetForce: 100,
       unit: 'kg',
-      maxTime: 10
+      maxTime: 10,
+      maxForce: 150,
+      adaptiveScaling: true
     };
     
     // Initialize renderer
@@ -84,6 +86,31 @@ export class ChartRenderer {
   }
   
   /**
+   * Calculate the axis limits based on data and settings
+   * @param {Array} data - The data points to render
+   * @returns {Object} - Axis limits {maxTime, maxForce}
+   * @private
+   */
+  _calculateAxisLimits(data) {
+    let maxTime = this.options.maxTime;
+    let maxForce = this.options.maxForce;
+    
+    // If adaptive scaling is enabled, calculate from data
+    if (this.options.adaptiveScaling && data.length > 0) {
+      // For time axis, take the max time from data or configured max, whichever is larger
+      const dataMaxTime = Math.max(...data.map(d => d.time));
+      maxTime = Math.max(dataMaxTime + 1, this.options.maxTime); // Add some padding
+      
+      // For force axis, take the max force from data or configured max, whichever is larger
+      // but only if using adaptive scaling
+      const dataMaxForce = Math.max(...data.map(d => d.force), 1);
+      maxForce = Math.max(dataMaxForce * 1.1, this.options.maxForce); // Add 10% padding
+    }
+    
+    return { maxTime, maxForce };
+  }
+  
+  /**
    * Render chart using Recharts library
    * @param {Array} data - Array of {time, force} data points
    * @private
@@ -98,11 +125,8 @@ export class ChartRenderer {
       force: point.force
     }));
     
-    // Determine max domain values
-    const maxTime = Math.max(
-      ...chartData.map(d => d.time), 
-      this.options.maxTime
-    );
+    // Calculate axis limits
+    const { maxTime, maxForce } = this._calculateAxisLimits(data);
     
     // Create Recharts component
     const chart = React.createElement(
@@ -121,6 +145,7 @@ export class ChartRenderer {
         label: { value: 'Time (seconds)', position: 'insideBottomRight', offset: -5 }
       }),
       React.createElement(YAxis, { 
+        domain: [0, maxForce],
         label: { value: `Force (${this.options.unit})`, angle: -90, position: 'insideLeft' }
       }),
       React.createElement(Tooltip, { 
@@ -179,16 +204,8 @@ export class ChartRenderer {
     const chartWidth = width - padding.left - padding.right;
     const chartHeight = height - padding.top - padding.bottom;
     
-    // Find max values
-    const maxTime = Math.max(
-      ...data.map(d => d.time), 
-      this.options.maxTime
-    );
-    const maxValue = Math.max(
-      ...data.map(d => d.force), 
-      this.options.targetForce,
-      1 // Ensure we have a non-zero value
-    ) * 1.1; // Add 10% margin
+    // Calculate axis limits
+    const { maxTime, maxForce } = this._calculateAxisLimits(data);
     
     // Draw axes
     ctx.strokeStyle = '#000';
@@ -221,7 +238,7 @@ export class ChartRenderer {
     ctx.textAlign = 'right';
     const yLabelCount = 5;
     for (let i = 0; i <= yLabelCount; i++) {
-      const value = (i / yLabelCount) * maxValue;
+      const value = (i / yLabelCount) * maxForce;
       const y = height - padding.bottom - (i / yLabelCount) * chartHeight;
       ctx.fillText(value.toFixed(0) + ' ' + this.options.unit, padding.left - 5, y + 3);
     }
@@ -229,7 +246,7 @@ export class ChartRenderer {
     // Draw target line if enabled
     if (this.options.showTargetLine) {
       const target = this.options.targetForce;
-      const targetY = height - padding.bottom - (target / maxValue) * chartHeight;
+      const targetY = height - padding.bottom - (target / maxForce) * chartHeight;
       
       ctx.beginPath();
       ctx.setLineDash([5, 5]);
@@ -255,7 +272,7 @@ export class ChartRenderer {
       
       data.forEach((point, i) => {
         const x = padding.left + (point.time / maxTime) * chartWidth;
-        const y = height - padding.bottom - (point.force / maxValue) * chartHeight;
+        const y = height - padding.bottom - (point.force / maxForce) * chartHeight;
         
         if (i === 0) {
           ctx.moveTo(x, y);
@@ -269,7 +286,7 @@ export class ChartRenderer {
       // Draw points
       data.forEach(point => {
         const x = padding.left + (point.time / maxTime) * chartWidth;
-        const y = height - padding.bottom - (point.force / maxValue) * chartHeight;
+        const y = height - padding.bottom - (point.force / maxForce) * chartHeight;
         
         ctx.beginPath();
         ctx.fillStyle = '#3B82F6';
