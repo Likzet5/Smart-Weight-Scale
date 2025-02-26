@@ -238,12 +238,29 @@ export class TindeqDevice {
     
     switch(responseCode) {
       case TindeqDevice.RESPONSES.WEIGHT:
-        // Weight response: code (1) + weight float32 (4) + timestamp uint32 (4)
-        if (dataView.byteLength >= 9) {
-          const weight = dataView.getFloat32(1, true); // true = little endian
+        // Check if it's a batch response (has count byte)
+        if (dataView.byteLength >= 2) {
+          const count = dataView.getUint8(1);
+          
+          // Process each sample in the batch
+          for (let i = 0; i < count; i++) {
+            const offset = 2 + (i * 8); // 8 bytes per sample (4 for float, 4 for uint32)
+            
+            if (offset + 8 <= dataView.byteLength) {
+              const weight = dataView.getFloat32(offset, true);
+              const timestamp = dataView.getUint32(offset + 4, true);
+              
+              // Call weight update callback
+              if (this.onWeightUpdate) {
+                this.onWeightUpdate(weight, timestamp);
+              }
+            }
+          }
+        } else if (dataView.byteLength >= 9) {
+          // Handle legacy single-sample format
+          const weight = dataView.getFloat32(1, true);
           const timestamp = dataView.getUint32(5, true);
           
-          // Call weight update callback
           if (this.onWeightUpdate) {
             this.onWeightUpdate(weight, timestamp);
           }
