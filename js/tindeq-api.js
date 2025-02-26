@@ -303,6 +303,9 @@ export class TindeqDevice {
       default:
         console.warn("Unknown response code:", responseCode);
     }
+  }catch (error) {
+    console.error("Error handling notification:", error);
+    }
   }
   
   /**
