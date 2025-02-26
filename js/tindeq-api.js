@@ -226,48 +226,57 @@ export class TindeqDevice {
    * @private
    */
   _handleDataNotification(event) {
-    const dataView = event.target.value;
-    
-    // Must have at least one byte for the response code
-    if (dataView.byteLength < 1) {
-      console.warn("Invalid data notification: too short");
-      return;
-    }
-    
-    const responseCode = dataView.getUint8(0);
-    
-    switch(responseCode) {
-      case TindeqDevice.RESPONSES.WEIGHT:
-        // Check if it's a batch response (has count byte)
-        if (dataView.byteLength >= 2) {
-          const count = dataView.getUint8(1);
-          
-          // Process each sample in the batch
-          for (let i = 0; i < count; i++) {
-            const offset = 2 + (i * 8); // 8 bytes per sample (4 for float, 4 for uint32)
+    try {
+      const dataView = event.target.value;
+      
+      // Must have at least one byte for the response code
+      if (dataView.byteLength < 1) {
+        console.warn("Invalid data notification: too short");
+        return;
+      }
+      
+      const responseCode = dataView.getUint8(0);
+      console.log(`Received notification with code: 0x${responseCode.toString(16)}, length: ${dataView.byteLength}`);
+      
+      switch(responseCode) {
+        case TindeqDevice.RESPONSES.WEIGHT:
+          // Check if it's a batch response (has count byte)
+          if (dataView.byteLength >= 2) {
+            const count = dataView.getUint8(1);
+            console.log(`Batch notification with ${count} samples`);
             
-            if (offset + 8 <= dataView.byteLength) {
-              const weight = dataView.getFloat32(offset, true);
-              const timestamp = dataView.getUint32(offset + 4, true);
+            // Process each sample in the batch
+            for (let i = 0; i < count; i++) {
+              const offset = 2 + (i * 8); // 8 bytes per sample (4 for float, 4 for uint32)
               
-              // Call weight update callback
-              if (this.onWeightUpdate) {
-                this.onWeightUpdate(weight, timestamp);
+              if (offset + 8 <= dataView.byteLength) {
+                const weight = dataView.getFloat32(offset, true);
+                const timestamp = dataView.getUint32(offset + 4, true);
+                
+                console.log(`Sample ${i}: ${weight.toFixed(2)} kg, timestamp: ${timestamp}`);
+                
+                // Call weight update callback
+                if (this.onWeightUpdate) {
+                  this.onWeightUpdate(weight, timestamp);
+                }
+              } else {
+                console.warn(`Invalid batch data: offset ${offset} exceeds length ${dataView.byteLength}`);
               }
             }
+          } else if (dataView.byteLength >= 9) {
+            // Handle legacy single-sample format
+            const weight = dataView.getFloat32(1, true);
+            const timestamp = dataView.getUint32(5, true);
+            
+            console.log(`Legacy sample: ${weight.toFixed(2)} kg, timestamp: ${timestamp}`);
+            
+            if (this.onWeightUpdate) {
+              this.onWeightUpdate(weight, timestamp);
+            }
+          } else {
+            console.warn("Invalid weight data format: expected 2+ or 9+ bytes, got", dataView.byteLength);
           }
-        } else if (dataView.byteLength >= 9) {
-          // Handle legacy single-sample format
-          const weight = dataView.getFloat32(1, true);
-          const timestamp = dataView.getUint32(5, true);
-          
-          if (this.onWeightUpdate) {
-            this.onWeightUpdate(weight, timestamp);
-          }
-        } else {
-          console.warn("Invalid weight data format: expected 9+ bytes, got", dataView.byteLength);
-        }
-        break;
+          break;
         
       case TindeqDevice.RESPONSES.BATTERY:
         // Battery response: code (1) + voltage uint32 (4)
