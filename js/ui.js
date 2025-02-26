@@ -212,7 +212,23 @@ export class UI {
       btn.classList.remove('opacity-50', 'cursor-not-allowed');
     });
   }
-  
+  /**
+ * Show a success message
+ * @param {string} message - Success message to display
+ */
+  showSuccess(message) {
+    this.errorMessage.classList.remove('text-red-500');
+    this.errorMessage.classList.add('text-green-500');
+    this.errorMessage.textContent = message;
+    this.errorMessage.classList.remove('hidden');
+    
+    // Auto hide after 5 seconds
+    setTimeout(() => {
+      this.errorMessage.classList.add('hidden');
+      this.errorMessage.classList.remove('text-green-500');
+      this.errorMessage.classList.add('text-red-500');
+    }, 5000);
+  }
   /**
    * Get the current settings from the UI
    * @returns {Object} - Settings object
