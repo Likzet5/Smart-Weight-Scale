@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Strength Training Monitor</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/17.0.2/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/17.0.2/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.5.0/Recharts.min.js"></script>
+  <link href="css/styles.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen">
+  <!-- App Header -->
+  <header class="bg-blue-600 text-white shadow">
+    <div class="container mx-auto py-4 px-6">
+      <h1 class="text-3xl font-bold">Strength Training Monitor</h1>
+      <p class="text-blue-100">Tindeq API Compatible</p>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container mx-auto px-6 py-8">
+    <!-- Web Bluetooth Compatibility Check -->
+    <div id="compatibility-check" class="hidden bg-amber-100 border-l-4 border-amber-500 p-4 rounded-lg mb-8">
+      <h2 class="font-bold text-lg text-amber-800">Web Bluetooth Not Supported</h2>
+      <p class="text-amber-700 mt-2">
+        Your browser doesn't support Web Bluetooth API which is required to connect to your training device.
+        Please use Chrome, Edge, or Opera on desktop, or Chrome for Android.
+      </p>
+    </div>
+
+    <!-- Connection Status -->
+    <div class="bg-white rounded-xl shadow p-6 mb-8">
+      <div class="flex flex-wrap items-center justify-between">
+        <div>
+          <h2 class="text-xl font-semibold mb-2">Device Connection</h2>
+          <p id="connection-status" class="text-red-600 font-medium">Not Connected</p>
+          <p id="device-name" class="text-gray-500 text-sm mt-1 hidden"></p>
+        </div>
+        <div class="flex space-x-3 mt-4 sm:mt-0">
+          <button id="connect-button" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">
+            Connect Device
+          </button>
+          <button id="disconnect-button" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition" disabled>
+            Disconnect
+          </button>
+          <button id="tare-button" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition" disabled>
+            Tare
+          </button>
+        </div>
+      </div>
+      <p id="error-message" class="text-red-500 mt-2 hidden"></p>
+    </div>
+
+    <!-- Force Measurements -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <!-- Current Force Gauge -->
+      <div class="bg-white rounded-xl shadow p-6">
+        <h3 class="text-lg font-medium text-center mb-4">Current Force</h3>
+        <div class="force-gauge">
+          <div id="current-force-fill" class="gauge-fill" style="height: 0%"></div>
+          <div id="current-force" class="gauge-value">0.0</div>
+          <div id="force-unit" class="gauge-unit">kg</div>
+        </div>
+      </div>
+
+      <!-- Peak Force -->
+      <div class="bg-white rounded-xl shadow p-6">
+        <h3 class="text-lg font-medium text-center mb-4">Peak Force</h3>
+        <div class="force-gauge">
+          <div id="peak-force-fill" class="gauge-fill" style="height: 0%"></div>
+          <div id="peak-force" class="gauge-value">0.0</div>
+          <div class="gauge-unit">kg</div>
+        </div>
+      </div>
+
+      <!-- Recording Status -->
+      <div class="bg-white rounded-xl shadow p-6">
+        <h3 class="text-lg font-medium text-center mb-4">Recording Status</h3>
+        <div class="flex flex-col items-center justify-center h-3/4">
+          <div id="recording-indicator" class="hidden">
+            <span class="recording-dot"></span>
+            <span class="font-medium text-red-600">RECORDING</span>
+          </div>
+          <div class="text-4xl font-bold mt-2" id="recording-time">0.0</div>
+          <div class="text-sm text-gray-500 mt-1">seconds</div>
+          <div class="flex space-x-3 mt-6">
+            <button id="start-recording" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition" disabled>
+              Start
+            </button>
+            <button id="stop-recording" class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition" disabled>
+              Stop
+            </button>
+            <button id="reset-data" class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition" disabled>
+              Reset
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Force Graph -->
+    <div class="bg-white rounded-xl shadow p-6 mb-8">
+      <h3 class="text-lg font-medium mb-4">Force Over Time</h3>
+      <div id="chart-container" class="chart-container">
+        <!-- Chart will be rendered here -->
+      </div>
+    </div>
+
+    <!-- Settings -->
+    <div class="bg-white rounded-xl shadow p-6 mb-8">
+      <h3 class="text-lg font-medium mb-4">Settings</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Exercise Type
+          </label>
+          <select id="exercise-type" class="w-full p-2 border rounded-md">
+            <option value="deadlift">Deadlift</option>
+            <option value="bench">Bench Press</option>
+            <option value="squat">Squat</option>
+            <option value="overhead">Overhead Press</option>
+            <option value="row">Row</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Weight Unit
+          </label>
+          <select id="weight-unit" class="w-full p-2 border rounded-md">
+            <option value="kg">Kilograms (kg)</option>
+            <option value="lbs">Pounds (lbs)</option>
+            <option value="N">Newtons (N)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Max Force Display Range
+          </label>
+          <input type="number" id="max-force" class="w-full p-2 border rounded-md" value="150" min="10" max="500">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Record Duration (seconds)
+          </label>
+          <input type="number" id="record-duration" class="w-full p-2 border rounded-md" value="10" min="1" max="60">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Target Force (kg)
+          </label>
+          <input type="number" id="target-force" class="w-full p-2 border rounded-md" value="100" min="0">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Show Target Line
+          </label>
+          <div class="flex items-center mt-3">
+            <input type="checkbox" id="show-target" class="h-4 w-4 text-blue-600">
+            <label for="show-target" class="ml-2 text-gray-700">Display target force on graph</label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Demo Mode -->
+    <div class="bg-white rounded-xl shadow p-6 mb-8">
+      <h3 class="text-lg font-medium mb-4">Demo Mode</h3>
+      <p class="text-gray-600 mb-4">No device? You can try the app with simulated data.</p>
+      <button id="demo-button" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition">
+        Start Demo Mode
+      </button>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-gray-800 text-white py-6">
+    <div class="container mx-auto px-6">
+      <p>© 2025 Strength Training Monitor. All rights reserved.</p>
+      <p class="text-gray-400 text-sm mt-2">Uses Web Bluetooth to connect directly to your device. No data is sent to any server.</p>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
