@@ -51,6 +51,7 @@ class App {
     this.ui.maxForce.addEventListener('change', () => this.updateSettings());
     this.ui.targetForce.addEventListener('change', () => this.updateSettings());
     this.ui.showTarget.addEventListener('change', () => this.updateSettings());
+    this.ui.recordDuration.addEventListener('change', () => this.updateSettings());
   }
   
   /**
@@ -101,7 +102,9 @@ class App {
       showTargetLine: settings.showTargetLine,
       targetForce: settings.targetForce,
       unit: settings.weightUnit,
-      maxTime: settings.recordDuration
+      maxTime: settings.recordDuration > 0 ? settings.recordDuration : 30, // Default to 30s for visual scaling if unlimited
+      maxForce: settings.maxForceRange,
+      adaptiveScaling: true // Always use adaptive scaling
     });
     
     // Update data manager settings
@@ -149,6 +152,8 @@ class App {
       // Reset peak force and history
       this.data.peakForce = 0;
       this.ui.updateForceDisplay(this.data.currentForce, 0, this.data.maxForceRange);
+      
+      // Clear the chart before starting new recording
       this.chart.clear();
       
       // Start recording in data manager
@@ -170,9 +175,9 @@ class App {
           this._generateDemoData(elapsed);
         }
         
-        // Stop recording after duration
+        // Check if we should stop recording based on duration
         const settings = this.ui.getSettings();
-        if (elapsed >= settings.recordDuration) {
+        if (settings.recordDuration > 0 && elapsed >= settings.recordDuration) {
           this.stopRecording();
         }
       }, 100);
@@ -267,7 +272,7 @@ class App {
     if (!this.data.isRecording) return;
     
     const settings = this.ui.getSettings();
-    const maxTime = settings.recordDuration;
+    const maxTime = settings.recordDuration > 0 ? settings.recordDuration : 30; // If unlimited, use 30s for demo curve
     const peakTime = maxTime / 2;
     const maxTargetForce = settings.targetForce;
     
