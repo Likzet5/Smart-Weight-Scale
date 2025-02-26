@@ -37,6 +37,7 @@ class App {
     this.ui.connectBtn.addEventListener('click', () => this.connectDevice());
     this.ui.disconnectBtn.addEventListener('click', () => this.disconnectDevice());
     this.ui.tareBtn.addEventListener('click', () => this.tareDevice());
+    this.ui.calibrateBtn.addEventListener('click', () => this.calibrateDevice());
     
     // Recording buttons
     this.ui.startRecordingBtn.addEventListener('click', () => this.startRecording());
@@ -145,6 +146,24 @@ class App {
   }
   
   /**
+   * Calibrate the device with a known weight
+   */
+  async calibrateDevice() {
+    try {
+      const knownWeight = parseFloat(this.ui.calibrationWeightInput.value);
+      if (isNaN(knownWeight) || knownWeight <= 0) {
+        this.ui.showError("Please enter a valid weight value greater than zero");
+        return;
+      }
+      
+      await this.device.calibrate(knownWeight);
+      this.ui.showSuccess(`Calibrated with ${knownWeight} kg`);
+    } catch (error) {
+      this.ui.showError("Failed to calibrate: " + error.message);
+    }
+  }
+  
+  /**
    * Start recording session
    */
   async startRecording() {
@@ -209,24 +228,6 @@ class App {
       } catch (error) {
         this.ui.showError("Failed to stop recording: " + error.message);
       }
-    }
-  }
-  
-  /**
- * Calibrate the device with a known weight
- */
-  async calibrateDevice() {
-    try {
-      const knownWeight = parseFloat(this.ui.calibrationWeightInput.value);
-      if (isNaN(knownWeight) || knownWeight <= 0) {
-        this.ui.showError("Please enter a valid weight value greater than zero");
-        return;
-      }
-      
-      await this.device.calibrate(knownWeight);
-      this.ui.showSuccess(`Calibrated with ${knownWeight} kg`);
-    } catch (error) {
-      this.ui.showError("Failed to calibrate: " + error.message);
     }
   }
   
