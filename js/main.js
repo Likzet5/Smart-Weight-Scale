@@ -26,6 +26,10 @@ class App {
     // Initialize UI
     this._updateChartOptions();
     this.ui.updateButtonStates();
+
+    // Monitor the sample rate
+    this.sampleCounter = 0;
+    this.lastHzCheck = Date.now();
   }
   
   /**
@@ -72,6 +76,16 @@ class App {
     
     // Weight/force updates
     this.device.onWeightUpdate = (weight, timestamp) => {
+      // Count each received sample
+      this.sampleCounter++;
+      
+      // Check if a second has passed
+      const now = Date.now();
+      if (now - this.lastHzCheck >= 1000) {
+        console.log(`Receiving ${this.sampleCounter} samples per second`);
+        this.sampleCounter = 0;
+        this.lastHzCheck = now;
+      }
       const { current, peak } = this.data.updateForce(weight);
       this.ui.updateForceDisplay(
         current, 
