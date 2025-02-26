@@ -213,6 +213,24 @@ class App {
   }
   
   /**
+ * Calibrate the device with a known weight
+ */
+  async calibrateDevice() {
+    try {
+      const knownWeight = parseFloat(this.ui.calibrationWeightInput.value);
+      if (isNaN(knownWeight) || knownWeight <= 0) {
+        this.ui.showError("Please enter a valid weight value greater than zero");
+        return;
+      }
+      
+      await this.device.calibrate(knownWeight);
+      this.ui.showSuccess(`Calibrated with ${knownWeight} kg`);
+    } catch (error) {
+      this.ui.showError("Failed to calibrate: " + error.message);
+    }
+  }
+  
+  /**
    * Reset all data
    */
   resetData() {
