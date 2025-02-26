@@ -44,7 +44,6 @@ export class UI {
     this.demoBtn = document.getElementById('demo-button');
     
     // Settings panel
-    this.exerciseType = document.getElementById('exercise-type');
     this.weightUnit = document.getElementById('weight-unit');
     this.maxForce = document.getElementById('max-force');
     this.recordDuration = document.getElementById('record-duration');
@@ -215,7 +214,6 @@ export class UI {
    */
   getSettings() {
     return {
-      exerciseType: this.exerciseType.value,
       weightUnit: this.weightUnit.value,
       maxForceRange: parseFloat(this.maxForce.value),
       recordDuration: parseFloat(this.recordDuration.value),
