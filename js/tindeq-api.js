@@ -13,6 +13,7 @@ export class TindeqDevice {
     TARE: 0x64,
     START_MEASUREMENT: 0x65,
     STOP_MEASUREMENT: 0x66,
+    CALIBRATE: 0x67,  // Add this line
     SHUTDOWN: 0x6E,
     SAMPLE_BATTERY: 0x6F
   };
@@ -373,6 +374,25 @@ export class TindeqDevice {
   isConnected() {
     return this._connected;
   }
+  
+  /**
+ * Calibrate the scale with a known weight
+ * @param {number} knownWeightKg - Weight in kg used for calibration
+ * @returns {Promise<boolean>} - Success status
+ */
+  async calibrate(knownWeightKg) {
+    console.log(`Calibrating with weight: ${knownWeightKg} kg`);
+    
+    // Convert the known weight to a byte array
+    const buffer = new ArrayBuffer(4);
+    const view = new DataView(buffer);
+    view.setFloat32(0, knownWeightKg, true); // true for little-endian
+    const weightBytes = new Uint8Array(buffer);
+    
+    // Send the command with the weight value
+    return await this._sendCommand(TindeqDevice.COMMANDS.CALIBRATE, Array.from(weightBytes));
+  }
+
   
   /**
    * Check if device is measuring
