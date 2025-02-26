@@ -10,6 +10,7 @@ from ble_advertising import advertising_payload
 OPCODE_TARE = const(0x64)
 OPCODE_START_MEASUREMENT = const(0x65)
 OPCODE_STOP_MEASUREMENT = const(0x66)
+OPCODE_CALIBRATE = const(0x67)  # New calibration opcode
 OPCODE_SHUTDOWN = const(0x6E)
 OPCODE_BATTERY = const(0x6F)
 
@@ -27,6 +28,11 @@ class StrengthPeripheral:
         self._ble = ble
         self._ble.active(True)
         self._name = name or config.DEVICE_NAME
+
+        # Add these for batching
+        self._sample_buffer = []
+        self._batch_size = 4  # Send 4 samples at once
+        self._last_sync_time = 0
         
         # Define UUIDs
         self._SERVICE_UUID = bluetooth.UUID(config.SERVICE_UUID)
@@ -53,11 +59,12 @@ class StrengthPeripheral:
         self._tare_callback = None
         self._command_callback = None
         self._weight_callback = None
+        self._calibrate_callback = None  # New calibration callback
         
         # State
         self._connections = set()
         self._measuring = False
-        self._measurement_start_time = 0
+        self._measurement_start_time = 0 
         
         # Register GATT service and start advertising
         self._init_ble()
@@ -127,6 +134,17 @@ class StrengthPeripheral:
             elif opcode == OPCODE_STOP_MEASUREMENT:
                 self.logger.info("Stop measurement command")
                 self._measuring = False
+                
+            elif opcode == OPCODE_CALIBRATE:
+                # Handle calibration command
+                if len(value) >= 6:  # Needs at least 6 bytes: opcode + length + float32
+                    self.logger.info(f"Calibrate command value bytes: {[hex(b) for b in value]}")
+                    known_weight = struct.unpack("<f", value[2:6])[0]  # Skip opcode and length bytes
+                    self.logger.info(f"Calibrate command with weight: {known_weight} kg")
+                    if self._calibrate_callback:
+                        self._calibrate_callback(known_weight)
+                else:
+                    self.logger.warn(f"Calibrate command received with invalid data length: {len(value)}")
             
             # Call general command handler if registered
             if self._command_callback:
@@ -153,12 +171,28 @@ class StrengthPeripheral:
             # Calculate time delta
             time_delta = time.ticks_diff(time.ticks_us(), self._measurement_start_time)
             
-            # Pack data: response code (0x01) + weight (float32) + timestamp (uint32)
-            data = struct.pack("<Bfi", RESPONSE_WEIGHT, weight_kg, time_delta)
+            # Add to sample buffer
+            self._sample_buffer.append((weight_kg, time_delta))
             
-            # Send to all connected devices
-            for conn in self._connections:
-                self._ble.gatts_notify(conn, self._handle_data, data)
+            # Send if buffer reaches batch size or 25ms has passed
+            current_time = time.ticks_ms()
+            if (len(self._sample_buffer) >= self._batch_size or 
+                time.ticks_diff(current_time, self._last_sync_time) >= 25):
+                
+                # Pack multiple samples into one notification
+                data = bytearray([RESPONSE_WEIGHT, len(self._sample_buffer)])
+                
+                for w, t in self._sample_buffer:
+                    # Pack each sample: weight (float32) + timestamp (uint32)
+                    data.extend(struct.pack("<fi", w, t))
+                
+                # Send to all connected devices
+                for conn in self._connections:
+                    self._ble.gatts_notify(conn, self._handle_data, data)
+                
+                # Reset buffer and update time
+                self._sample_buffer = []
+                self._last_sync_time = current_time
                 
             return True
         except Exception as e:
@@ -202,3 +236,7 @@ class StrengthPeripheral:
     def on_weight(self, callback):
         """Register weight update callback"""
         self._weight_callback = callback
+        
+    def on_calibrate(self, callback):
+        """Register calibration event callback"""
+        self._calibrate_callback = callback

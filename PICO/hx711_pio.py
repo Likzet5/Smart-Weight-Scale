@@ -100,23 +100,25 @@ class HX711:
         # Pulse clock line for at least 60 cycles
         for _ in range(80):
             self.clock.value(True)
-            time.sleep_us(10)
+            time.sleep_us(20)  # Increased pulse width
             self.clock.value(False)
-            time.sleep_us(10)
+            time.sleep_us(20)  # Increased pulse width
             
         # Return data pin to input mode
         self.data.init(Pin.IN, Pin.PULL_DOWN)
-        time.sleep_ms(10)  # Wait for chip to stabilize
+        time.sleep_ms(50)  # Increased delay after reset
         
         # Check if device is now responding
         for _ in range(500):
             if self.data.value() == False:
                 print("HX711 reset successful")
                 return True
-            time.sleep_us(10)
+            time.sleep_us(20)
         
         print("HX711 reset failed")
         return False
+
+    # In hx711_pio.py, modify the read method to fall back to polling mode when IRQ fails
 
     def read(self):
         """Read a raw value from the HX711 with improved error handling"""
@@ -124,37 +126,49 @@ class HX711:
         if self.error_count >= self.max_errors:
             if self.reset_hx711():
                 self.error_count = 0
+                # Add a longer delay after reset
+                time.sleep_ms(100)  # Give HX711 more time to stabilize after reset
             else:
                 raise OSError("HX711 not responding after multiple retries and reset")
 
         try:
+            # First, try using the IRQ method
             if hasattr(self.data, "irq"):
-                self.conversion_done = False
-                self.data.irq(trigger=Pin.IRQ_FALLING, handler=self.conversion_done_cb)
-                # wait for the device being ready
-                for _ in range(500):
-                    if self.conversion_done == True:
-                        break
-                    time.sleep_ms(1)
-                else:
+                try:
+                    self.conversion_done = False
+                    self.data.irq(trigger=Pin.IRQ_FALLING, handler=self.conversion_done_cb)
+                    # wait for the device being ready (with timeout)
+                    for _ in range(100):  # Shorter timeout - fail faster to try polling
+                        if self.conversion_done == True:
+                            break
+                        time.sleep_ms(1)
+                    else:
+                        # IRQ method failed, remove IRQ and fall back to polling
+                        self.data.irq(handler=None)
+                        # Don't increment error count yet, try polling first
+                        raise OSError("Falling back to polling mode")
+                except:
+                    # If IRQ method raises any exception, remove handler and continue to polling
                     self.data.irq(handler=None)
-                    self.error_count += 1
-                    raise OSError("Sensor does not respond to IRQ")
+            
+            # Polling method (either as primary method or fallback)
+            # Wait for data line to go high first (ensures we're in sync)
+            for _ in range(1000):  # Increased timeout
+                if self.data():
+                    break
+                time.sleep_us(10)
             else:
-                # wait polling for the trigger pulse
-                for _ in range(self.__wait_loop):
-                    if self.data():
-                        break
-                else:
-                    self.error_count += 1
-                    raise OSError("No trigger pulse found")
-                for _ in range(5000):
-                    if not self.data():
-                        break
-                    time.sleep_us(100)
-                else:
-                    self.error_count += 1
-                    raise OSError("Sensor does not respond to polling")
+                self.error_count += 1
+                raise OSError("No high pulse found on data line")
+                
+            # Then wait for data line to go low (ready to read)
+            for _ in range(2000):  # Increased timeout
+                if not self.data():
+                    break
+                time.sleep_us(10)
+            else:
+                self.error_count += 1
+                raise OSError("No falling edge found on data line")
 
             # Feed the waiting state machine & get the data
             self.sm.active(1)  # start the state machine
@@ -185,22 +199,38 @@ class HX711:
         """Read multiple samples and return average, with retry logic"""
         sum = 0
         successful_reads = 0
-        max_attempts = times * 2  # Try up to twice as many times as requested
+        max_attempts = times * 3  # Try even more times than before
         
         for _ in range(max_attempts):
             if successful_reads >= times:
                 break
                 
             try:
-                sum += self.read()
+                # Add a short delay between reads
+                if successful_reads > 0:
+                    time.sleep_ms(10)  # Give HX711 a bit of time between readings
+                    
+                value = self.read()
+                sum += value
                 successful_reads += 1
+                # Reset error count on successful read
+                self.error_count = 0
             except Exception as e:
                 print(f"Warning: Error during read_average: {e}")
-                time.sleep_ms(50)  # Brief pause before retry
+                time.sleep_ms(50)  # Longer pause before retry
                 
         if successful_reads == 0:
+            # If all reads failed, try a reset and one more reading
+            if self.reset_hx711():
+                time.sleep_ms(100)  # Longer delay after reset
+                try:
+                    value = self.read()
+                    return value  # Return single reading if successful
+                except:
+                    pass
+                    
             raise OSError("Failed to get any valid readings")
-            
+                
         return sum / successful_reads
 
     def read_lowpass(self):

@@ -72,6 +72,34 @@ class WeightSensor:
                 pass
             return False
     
+    def calibrate(self, known_weight_kg):
+        """Calibrate the scale using a known weight"""
+        if self.simulation_mode:
+            self.logger.info(f"Simulation mode: Can't calibrate")
+            return False
+            
+        try:
+            if self.hx711 is None:
+                return False
+                
+            self.logger.info(f"Calibrating with known weight of {known_weight_kg} kg")
+            
+            # Take raw reading
+            raw_value = self.hx711.get_value()
+            
+            # Calculate new scale factor 
+            new_scale = raw_value / known_weight_kg
+            
+            # Set the new scale factor
+            self.hx711.set_scale(new_scale)
+            self.scale_factor = new_scale
+            
+            self.logger.info(f"Calibration complete. New scale factor: {new_scale}")
+            return True
+        except Exception as e:
+            self.logger.error(f"Calibration error: {e}")
+            return False
+    
     def get_weight(self):
         """Read weight from sensor or generate simulated data"""
         if self.simulation_mode:
