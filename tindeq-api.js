@@ -50,6 +50,7 @@ class TindeqDevice {
           { services: [this.SERVICE_UUID] },
           // Also allow devices that advertise with a name to support your Pico
           { namePrefix: "PicoStrength" },
+          { namePrefix: "Weight" },
           { namePrefix: "TindeqEmulator" }
         ],
         optionalServices: [this.SERVICE_UUID]
