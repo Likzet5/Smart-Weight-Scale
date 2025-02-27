@@ -1,6 +1,7 @@
 /**
  * UI management for the Strength Training Monitor
  * Handles DOM updates, event binding, and interface state
+ * Enhanced with RFD (Rate of Force Development) support
  */
 export class UI {
   constructor() {
@@ -25,7 +26,6 @@ export class UI {
     this.connectionStatus = document.getElementById('connection-status');
     this.deviceName = document.getElementById('device-name');
     this.errorMessage = document.getElementById('error-message');
-
     this.calibrationWeightInput = document.getElementById('calibration-weight');
     this.calibrateBtn = document.getElementById('calibrate-button');
     
@@ -35,6 +35,22 @@ export class UI {
     this.peakForceEl = document.getElementById('peak-force');
     this.peakForceFill = document.getElementById('peak-force-fill');
     this.forceUnit = document.getElementById('force-unit');
+    this.forceSection = document.getElementById('force-section');
+    this.timeToPeakForce = document.getElementById('time-to-peak-force');
+    this.avgForce = document.getElementById('avg-force');
+    this.forceImpulse = document.getElementById('force-impulse');
+    
+    // RFD display
+    this.currentRFDEl = document.getElementById('current-rfd');
+    this.currentRFDFill = document.getElementById('current-rfd-fill');
+    this.peakRFDEl = document.getElementById('peak-rfd');
+    this.peakRFDFill = document.getElementById('peak-rfd-fill');
+    this.rfdUnit = document.getElementById('rfd-unit');
+    this.rfdSection = document.getElementById('rfd-section');
+    this.timeToPeakRFD = document.getElementById('time-to-peak-rfd');
+    this.avgRFD = document.getElementById('avg-rfd');
+    this.rfdWindowInput = document.getElementById('rfd-window');
+    this.rfdWindowValue = document.getElementById('rfd-window-value');
     
     // Recording controls
     this.startRecordingBtn = document.getElementById('start-recording');
@@ -49,9 +65,26 @@ export class UI {
     // Settings panel
     this.weightUnit = document.getElementById('weight-unit');
     this.maxForce = document.getElementById('max-force');
+    this.maxRFD = document.getElementById('max-rfd');
     this.recordDuration = document.getElementById('record-duration');
     this.targetForce = document.getElementById('target-force');
+    this.targetRFD = document.getElementById('target-rfd');
     this.showTarget = document.getElementById('show-target');
+    this.showRFDTarget = document.getElementById('show-rfd-target');
+    
+    // Display toggles
+    this.showForceLine = document.getElementById('show-force-line');
+    this.showRFDLine = document.getElementById('show-rfd-line');
+    
+    // Add toggle event listeners
+    this.showForceLine.addEventListener('change', () => this._updateMetricVisibility());
+    this.showRFDLine.addEventListener('change', () => this._updateMetricVisibility());
+    
+    // Initialize RFD window slider
+    this.rfdWindowInput.addEventListener('input', () => {
+      const value = this.rfdWindowInput.value;
+      this.rfdWindowValue.textContent = `${value}ms`;
+    });
     
     // Chart container
     this.chartContainer = document.getElementById('chart-container');
@@ -63,6 +96,23 @@ export class UI {
     if (!navigator.bluetooth) {
       this.compatibilityCheck.classList.remove('hidden');
     }
+    
+    // Initialize display based on toggle states
+    this._updateMetricVisibility();
+  }
+  
+  /**
+   * Update metric visibility based on toggle states
+   * @private
+   */
+  _updateMetricVisibility() {
+    // Get current toggle states
+    const showForce = this.showForceLine.checked;
+    const showRFD = this.showRFDLine.checked;
+    
+    // Update section visibility
+    this.forceSection.classList.toggle('section-hidden', !showForce);
+    this.rfdSection.classList.toggle('section-hidden', !showRFD);
   }
   
   /**
@@ -141,6 +191,9 @@ export class UI {
    * @param {number} maxRange - Maximum force range for gauge
    */
   updateForceDisplay(currentForce, peakForce, maxRange) {
+    // Skip if force display is toggled off
+    if (!this.showForceLine.checked) return;
+    
     // Update text values
     this.currentForceEl.textContent = currentForce.toFixed(1);
     this.peakForceEl.textContent = peakForce.toFixed(1);
@@ -151,6 +204,28 @@ export class UI {
     
     this.currentForceFill.style.height = `${currentFillPercent}%`;
     this.peakForceFill.style.height = `${peakFillPercent}%`;
+  }
+  
+  /**
+   * Update the RFD display gauges and values
+   * @param {number} currentRFD - Current RFD value
+   * @param {number} peakRFD - Peak RFD value
+   * @param {number} maxRange - Maximum RFD range for gauge
+   */
+  updateRFDDisplay(currentRFD, peakRFD, maxRange) {
+    // Skip if RFD display is toggled off
+    if (!this.showRFDLine.checked) return;
+    
+    // Update text values
+    this.currentRFDEl.textContent = currentRFD.toFixed(1);
+    this.peakRFDEl.textContent = peakRFD.toFixed(1);
+    
+    // Update gauge fills
+    const currentFillPercent = Math.min(100, (currentRFD / maxRange) * 100);
+    const peakFillPercent = Math.min(100, (peakRFD / maxRange) * 100);
+    
+    this.currentRFDFill.style.height = `${currentFillPercent}%`;
+    this.peakRFDFill.style.height = `${peakFillPercent}%`;
   }
   
   /**
@@ -167,6 +242,35 @@ export class UI {
    */
   updateUnitDisplay(unit) {
     this.forceUnit.textContent = unit;
+    this.rfdUnit.textContent = unit + '/s';
+  }
+  
+  /**
+   * Update force statistics
+   * @param {number} timeToPeak - Time to peak force
+   * @param {number} avgForce - Average force
+   * @param {number} impulse - Force impulse
+   */
+  updateForceStats(timeToPeak, avgForce, impulse) {
+    // Skip if force display is toggled off
+    if (!this.showForceLine.checked) return;
+    
+    this.timeToPeakForce.textContent = timeToPeak.toFixed(1) + 's';
+    this.avgForce.textContent = avgForce.toFixed(1) + ' ' + this.forceUnit.textContent;
+    this.forceImpulse.textContent = impulse.toFixed(1) + ' ' + this.forceUnit.textContent + '·s';
+  }
+  
+  /**
+   * Update RFD statistics
+   * @param {number} timeToPeakRFD - Time to peak RFD
+   * @param {number} avgRFD - Average RFD
+   */
+  updateRFDStats(timeToPeakRFD, avgRFD) {
+    // Skip if RFD display is toggled off
+    if (!this.showRFDLine.checked) return;
+    
+    this.timeToPeakRFD.textContent = timeToPeakRFD.toFixed(1) + 's';
+    this.avgRFD.textContent = avgRFD.toFixed(1) + ' ' + this.rfdUnit.textContent;
   }
   
   /**
@@ -175,7 +279,23 @@ export class UI {
    */
   showError(message) {
     this.errorMessage.textContent = message;
-    this.errorMessage.classList.remove('hidden');
+    this.errorMessage.classList.remove('hidden', 'text-green-500');
+    this.errorMessage.classList.add('text-red-500');
+    
+    // Auto hide after 5 seconds
+    setTimeout(() => {
+      this.errorMessage.classList.add('hidden');
+    }, 5000);
+  }
+  
+  /**
+   * Show a success message
+   * @param {string} message - Success message to display
+   */
+  showSuccess(message) {
+    this.errorMessage.textContent = message;
+    this.errorMessage.classList.remove('hidden', 'text-red-500');
+    this.errorMessage.classList.add('text-green-500');
     
     // Auto hide after 5 seconds
     setTimeout(() => {
@@ -193,7 +313,6 @@ export class UI {
     this.connectBtn.disabled = activeConnection;
     this.disconnectBtn.disabled = !this.connected;
     this.tareBtn.disabled = !this.connected;
-
     this.calibrateBtn.disabled = !this.connected || this.recording;
     
     // Recording buttons
@@ -212,23 +331,7 @@ export class UI {
       btn.classList.remove('opacity-50', 'cursor-not-allowed');
     });
   }
-  /**
- * Show a success message
- * @param {string} message - Success message to display
- */
-  showSuccess(message) {
-    this.errorMessage.classList.remove('text-red-500');
-    this.errorMessage.classList.add('text-green-500');
-    this.errorMessage.textContent = message;
-    this.errorMessage.classList.remove('hidden');
-    
-    // Auto hide after 5 seconds
-    setTimeout(() => {
-      this.errorMessage.classList.add('hidden');
-      this.errorMessage.classList.remove('text-green-500');
-      this.errorMessage.classList.add('text-red-500');
-    }, 5000);
-  }
+  
   /**
    * Get the current settings from the UI
    * @returns {Object} - Settings object
@@ -237,9 +340,15 @@ export class UI {
     return {
       weightUnit: this.weightUnit.value,
       maxForceRange: parseFloat(this.maxForce.value),
+      maxRFDRange: parseFloat(this.maxRFD.value),
       recordDuration: parseFloat(this.recordDuration.value),
       targetForce: parseFloat(this.targetForce.value),
-      showTargetLine: this.showTarget.checked
+      targetRFD: parseFloat(this.targetRFD.value),
+      showTargetLine: this.showTarget.checked,
+      showRFDTargetLine: this.showRFDTarget.checked,
+      showForceLine: this.showForceLine.checked,
+      showRFDLine: this.showRFDLine.checked,
+      rfdWindow: parseFloat(this.rfdWindowInput.value) / 1000 // Convert from ms to seconds
     };
   }
 }
