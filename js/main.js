@@ -1,11 +1,12 @@
 /**
  * Main application for Strength Training Monitor
  * Manages the interaction between UI, data, and device connectivity
+ * Enhanced with RFD (Rate of Force Development) support
  */
 import { TindeqDevice } from './tindeq-api.js';
 import { DataManager } from './data-manager.js';
 import { UI } from './ui.js';
-import { ChartRenderer } from './chart-renderer.js';
+import { DualAxisChartRenderer } from './dual-axis-chart-renderer.js';
 
 class App {
   constructor() {
@@ -13,7 +14,7 @@ class App {
     this.ui = new UI();
     this.data = new DataManager();
     this.device = new TindeqDevice();
-    this.chart = new ChartRenderer('chart-container');
+    this.chart = new DualAxisChartRenderer('chart-container');
     
     // Timers and intervals
     this.recordingInterval = null;
@@ -54,9 +55,13 @@ class App {
     // Settings changes
     this.ui.weightUnit.addEventListener('change', () => this.changeWeightUnit());
     this.ui.maxForce.addEventListener('change', () => this.updateSettings());
+    this.ui.maxRFD.addEventListener('change', () => this.updateSettings());
     this.ui.targetForce.addEventListener('change', () => this.updateSettings());
+    this.ui.targetRFD.addEventListener('change', () => this.updateSettings());
     this.ui.showTarget.addEventListener('change', () => this.updateSettings());
+    this.ui.showRFDTarget.addEventListener('change', () => this.updateSettings());
     this.ui.recordDuration.addEventListener('change', () => this.updateSettings());
+    this.ui.rfdWindowInput.addEventListener('change', () => this.updateSettings());
   }
   
   /**
@@ -86,6 +91,8 @@ class App {
         this.sampleCounter = 0;
         this.lastHzCheck = now;
       }
+      
+      // Update force values
       const { current, peak } = this.data.updateForce(weight);
       this.ui.updateForceDisplay(
         current, 
@@ -96,7 +103,17 @@ class App {
       // Add to history if recording
       if (this.data.isRecording) {
         const timeSeconds = this.data.addForceDataPoint(weight);
-        this.chart.render(this.data.forceHistory);
+        
+        // Get RFD values and update UI
+        const { current: currentRFD, peak: peakRFD } = this.data.getRFDValues();
+        this.ui.updateRFDDisplay(
+          currentRFD,
+          peakRFD,
+          this.data.maxRFDRange
+        );
+        
+        // Render chart
+        this.chart.render(this.data.forceHistory, this.data.rfdHistory);
       }
     };
     
@@ -114,17 +131,25 @@ class App {
     const settings = this.ui.getSettings();
     
     this.chart.setOptions({
-      showTargetLine: settings.showTargetLine,
+      showForce: settings.showForceLine,
+      showRFD: settings.showRFDLine,
+      showForceTargetLine: settings.showTargetLine,
+      showRFDTargetLine: settings.showRFDTargetLine,
       targetForce: settings.targetForce,
+      targetRFD: settings.targetRFD,
       unit: settings.weightUnit,
       maxTime: settings.recordDuration > 0 ? settings.recordDuration : 30, // Default to 30s for visual scaling if unlimited
       maxForce: settings.maxForceRange,
-      adaptiveScaling: true // Always use adaptive scaling
+      maxRFD: settings.maxRFDRange,
+      adaptiveScaling: true, // Always use adaptive scaling
+      smoothCurve: true // Use smooth curves for better visualization
     });
     
     // Update data manager settings
     this.data.targetForce = settings.targetForce;
     this.data.maxForceRange = settings.maxForceRange;
+    this.data.maxRFDRange = settings.maxRFDRange;
+    this.data.rfdWindow = settings.rfdWindow;
   }
   
   /**
@@ -182,9 +207,11 @@ class App {
    */
   async startRecording() {
     try {
-      // Reset peak force and history
+      // Reset peak values and history
       this.data.peakForce = 0;
+      this.data.peakRFD = 0;
       this.ui.updateForceDisplay(this.data.currentForce, 0, this.data.maxForceRange);
+      this.ui.updateRFDDisplay(this.data.currentRFD, 0, this.data.maxRFDRange);
       
       // Clear the chart before starting new recording
       this.chart.clear();
@@ -235,6 +262,9 @@ class App {
     // Stop data recording
     this.data.stopRecording();
     
+    // Update statistics
+    this.updateStatistics();
+    
     // Stop device if not in demo mode
     if (!this.ui.demoMode && this.device.isConnected()) {
       try {
@@ -243,6 +273,22 @@ class App {
         this.ui.showError("Failed to stop recording: " + error.message);
       }
     }
+  }
+  
+  /**
+   * Update statistics after recording
+   */
+  updateStatistics() {
+    // Calculate and update force statistics
+    const timeToPeakForce = this.data.getTimeToPeak();
+    const avgForce = this.data.getAverageForce();
+    const impulse = this.data.getImpulse();
+    this.ui.updateForceStats(timeToPeakForce, avgForce, impulse);
+    
+    // Calculate and update RFD statistics
+    const timeToPeakRFD = this.data.getTimeToPeakRFD();
+    const avgRFD = this.data.getAverageRFD();
+    this.ui.updateRFDStats(timeToPeakRFD, avgRFD);
   }
   
   /**
@@ -255,6 +301,9 @@ class App {
     // Update UI
     this.ui.updateRecordingTime(0);
     this.ui.updateForceDisplay(0, 0, this.data.maxForceRange);
+    this.ui.updateRFDDisplay(0, 0, this.data.maxRFDRange);
+    this.ui.updateForceStats(0, 0, 0);
+    this.ui.updateRFDStats(0, 0);
     
     // Clear chart
     this.chart.clear();
@@ -318,9 +367,15 @@ class App {
     const { current, peak } = this.data.updateForce(force);
     this.ui.updateForceDisplay(current, peak, this.data.maxForceRange);
     
-    // Add to history
+    // Add to history and calculate RFD
     this.data.addForceDataPoint(force);
-    this.chart.render(this.data.forceHistory);
+    
+    // Get RFD values and update UI
+    const { current: currentRFD, peak: peakRFD } = this.data.getRFDValues();
+    this.ui.updateRFDDisplay(currentRFD, peakRFD, this.data.maxRFDRange);
+    
+    // Render chart
+    this.chart.render(this.data.forceHistory, this.data.rfdHistory);
   }
   
   /**
@@ -340,10 +395,18 @@ class App {
       this.data.peakForce, 
       this.data.maxForceRange
     );
+    this.ui.updateRFDDisplay(
+      this.data.currentRFD,
+      this.data.peakRFD,
+      this.data.maxRFDRange
+    );
     
     // Update chart
     this._updateChartOptions();
-    this.chart.render(this.data.forceHistory);
+    this.chart.render(this.data.forceHistory, this.data.rfdHistory);
+    
+    // Update statistics
+    this.updateStatistics();
   }
   
   /**
@@ -355,6 +418,9 @@ class App {
     // Update data model
     this.data.targetForce = settings.targetForce;
     this.data.maxForceRange = settings.maxForceRange;
+    this.data.maxRFDRange = settings.maxRFDRange;
+    this.data.rfdWindow = settings.rfdWindow;
+    this.data.rfdSmoothingFactor = 0.3; // Fixed value, could be made configurable
     
     // Update UI
     this.ui.updateForceDisplay(
@@ -362,10 +428,15 @@ class App {
       this.data.peakForce, 
       this.data.maxForceRange
     );
+    this.ui.updateRFDDisplay(
+      this.data.currentRFD,
+      this.data.peakRFD,
+      this.data.maxRFDRange
+    );
     
     // Update chart
     this._updateChartOptions();
-    this.chart.render(this.data.forceHistory);
+    this.chart.render(this.data.forceHistory, this.data.rfdHistory);
   }
 }
 
