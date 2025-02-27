@@ -30,6 +30,25 @@
       </p>
     </div>
 
+    <!-- Display Controls -->
+    <div class="bg-white rounded-xl shadow p-6 mb-8">
+      <h3 class="text-lg font-medium mb-4">Display Controls</h3>
+      <div class="flex flex-wrap gap-6">
+        <label class="inline-flex items-center">
+          <input type="checkbox" id="show-force-line" class="h-5 w-5 text-blue-600" checked>
+          <span class="ml-2 text-blue-600 font-medium">Force Data</span>
+        </label>
+        <label class="inline-flex items-center">
+          <input type="checkbox" id="show-rfd-line" class="h-5 w-5 text-purple-600" checked>
+          <span class="ml-2 text-purple-600 font-medium">RFD Data</span>
+        </label>
+        <p class="w-full text-sm text-gray-500 mt-2">
+          Toggle controls affect all gauges, statistics, and chart data. 
+          Data continues to be recorded even when display is disabled.
+        </p>
+      </div>
+    </div>
+
     <!-- Connection Status -->
     <div class="bg-white rounded-xl shadow p-6 mb-8">
       <div class="flex flex-wrap items-center justify-between">
@@ -38,14 +57,14 @@
           <p id="connection-status" class="text-red-600 font-medium">Not Connected</p>
           <p id="device-name" class="text-gray-500 text-sm mt-1 hidden"></p>
         </div>
-        <div class="flex space-x-3 mt-4 sm:mt-0">
-          <button id="connect-button" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">
-            Connect Device
+        <div class="grid grid-cols-3 gap-2 mt-4 sm:mt-0">
+          <button id="connect-button" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">
+            Connect
           </button>
-          <button id="disconnect-button" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition" disabled>
+          <button id="disconnect-button" class="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition opacity-50 cursor-not-allowed" disabled>
             Disconnect
           </button>
-          <button id="tare-button" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition" disabled>
+          <button id="tare-button" class="px-3 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition opacity-50 cursor-not-allowed" disabled>
             Tare
           </button>
         </div>
@@ -53,56 +72,130 @@
       <p id="error-message" class="text-red-500 mt-2 hidden"></p>
     </div>
 
-    <!-- Force Measurements -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-      <!-- Current Force Gauge -->
-      <div class="bg-white rounded-xl shadow p-6">
-        <h3 class="text-lg font-medium text-center mb-4">Current Force</h3>
-        <div class="force-gauge">
-          <div id="current-force-fill" class="gauge-fill" style="height: 0%"></div>
-          <div id="current-force" class="gauge-value">0.0</div>
-          <div id="force-unit" class="gauge-unit">kg</div>
+    <!-- Force Measurements - Conditionally visible -->
+    <div id="force-section" class="bg-white rounded-xl shadow p-6 mb-8">
+      <h3 class="text-lg font-medium mb-4 text-blue-700">Force Measurements</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Current Force Gauge -->
+        <div>
+          <h4 class="text-center text-gray-600 mb-3">Current Force</h4>
+          <div class="force-gauge">
+            <div id="current-force-fill" class="gauge-fill" style="height: 0%"></div>
+            <div id="current-force" class="gauge-value">0.0</div>
+            <div id="force-unit" class="gauge-unit">kg</div>
+          </div>
+        </div>
+
+        <!-- Peak Force -->
+        <div>
+          <h4 class="text-center text-gray-600 mb-3">Peak Force</h4>
+          <div class="force-gauge">
+            <div id="peak-force-fill" class="gauge-fill" style="height: 0%"></div>
+            <div id="peak-force" class="gauge-value">0.0</div>
+            <div class="gauge-unit">kg</div>
+          </div>
+        </div>
+
+        <!-- Force Stats -->
+        <div>
+          <h4 class="text-center text-gray-600 mb-3">Force Statistics</h4>
+          <div class="bg-gray-50 p-4 rounded-lg h-40 flex flex-col justify-center">
+            <div class="grid grid-cols-1 gap-y-3">
+              <div class="flex justify-between">
+                <span class="text-gray-600">Time to Peak Force:</span>
+                <span id="time-to-peak-force" class="font-medium">0.0s</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600">Average Force:</span>
+                <span id="avg-force" class="font-medium">0.0 kg</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600">Impulse:</span>
+                <span id="force-impulse" class="font-medium">0.0 kg·s</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
+    </div>
 
-      <!-- Peak Force -->
-      <div class="bg-white rounded-xl shadow p-6">
-        <h3 class="text-lg font-medium text-center mb-4">Peak Force</h3>
-        <div class="force-gauge">
-          <div id="peak-force-fill" class="gauge-fill" style="height: 0%"></div>
-          <div id="peak-force" class="gauge-value">0.0</div>
-          <div class="gauge-unit">kg</div>
+    <!-- RFD Measurements - Conditionally visible -->
+    <div id="rfd-section" class="bg-white rounded-xl shadow p-6 mb-8">
+      <h3 class="text-lg font-medium mb-4 text-purple-700">RFD Measurements</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Current RFD Gauge -->
+        <div>
+          <h4 class="text-center text-gray-600 mb-3">Current RFD</h4>
+          <div class="force-gauge">
+            <div id="current-rfd-fill" class="gauge-fill rfd-gauge-fill" style="height: 0%"></div>
+            <div id="current-rfd" class="gauge-value">0.0</div>
+            <div id="rfd-unit" class="gauge-unit">kg/s</div>
+          </div>
+        </div>
+
+        <!-- Peak RFD -->
+        <div>
+          <h4 class="text-center text-gray-600 mb-3">Peak RFD</h4>
+          <div class="force-gauge">
+            <div id="peak-rfd-fill" class="gauge-fill rfd-gauge-fill" style="height: 0%"></div>
+            <div id="peak-rfd" class="gauge-value">0.0</div>
+            <div class="gauge-unit">kg/s</div>
+          </div>
+        </div>
+
+        <!-- RFD Stats -->
+        <div>
+          <h4 class="text-center text-gray-600 mb-3">RFD Statistics</h4>
+          <div class="bg-gray-50 p-4 rounded-lg h-40 flex flex-col justify-center">
+            <div class="grid grid-cols-1 gap-y-3">
+              <div class="flex justify-between">
+                <span class="text-gray-600">Time to Peak RFD:</span>
+                <span id="time-to-peak-rfd" class="font-medium">0.0s</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600">Average RFD:</span>
+                <span id="avg-rfd" class="font-medium">0.0 kg/s</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600">RFD Window:</span>
+                <div class="inline-flex items-center">
+                  <input id="rfd-window" type="range" min="10" max="500" value="100" class="w-24 h-2 mr-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                  <span id="rfd-window-value" class="font-medium">100ms</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
+    </div>
 
-      <!-- Recording Status -->
-      <div class="bg-white rounded-xl shadow p-6">
-        <h3 class="text-lg font-medium text-center mb-4">Recording Status</h3>
-        <div class="flex flex-col items-center justify-center h-3/4">
-          <div id="recording-indicator" class="hidden">
-            <span class="recording-dot"></span>
-            <span class="font-medium text-red-600">RECORDING</span>
-          </div>
-          <div class="text-4xl font-bold mt-2" id="recording-time">0.0</div>
-          <div class="text-sm text-gray-500 mt-1">seconds</div>
-          <div class="flex space-x-3 mt-6">
-            <button id="start-recording" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition" disabled>
-              Start
-            </button>
-            <button id="stop-recording" class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition" disabled>
-              Stop
-            </button>
-            <button id="reset-data" class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition" disabled>
-              Reset
-            </button>
-          </div>
+    <!-- Recording Controls -->
+    <div class="bg-white rounded-xl shadow p-6 mb-8">
+      <h3 class="text-lg font-medium text-center mb-4">Recording Controls</h3>
+      <div class="flex flex-col items-center justify-center">
+        <div id="recording-indicator" class="hidden mb-2">
+          <span class="recording-dot"></span>
+          <span class="font-medium text-red-600">RECORDING</span>
+        </div>
+        <div class="text-4xl font-bold" id="recording-time">0.0</div>
+        <div class="text-sm text-gray-500 mt-1 mb-4">seconds</div>
+        <div class="grid grid-cols-3 gap-3">
+          <button id="start-recording" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition opacity-50 cursor-not-allowed" disabled>
+            Start
+          </button>
+          <button id="stop-recording" class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition opacity-50 cursor-not-allowed" disabled>
+            Stop
+          </button>
+          <button id="reset-data" class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition opacity-50 cursor-not-allowed" disabled>
+            Reset
+          </button>
         </div>
       </div>
     </div>
 
     <!-- Force Graph -->
     <div class="bg-white rounded-xl shadow p-6 mb-8">
-      <h3 class="text-lg font-medium mb-4">Force Over Time</h3>
+      <h3 class="text-lg font-medium mb-4">Data Visualization</h3>
       <div id="chart-container" class="chart-container">
         <!-- Chart will be rendered here -->
       </div>
@@ -147,22 +240,42 @@
 
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">
-            Show Target Line
+            Max RFD Range (kg/s)
           </label>
-          <div class="flex items-center mt-3">
-            <input type="checkbox" id="show-target" class="h-4 w-4 text-blue-600">
-            <label for="show-target" class="ml-2 text-gray-700">Display target force on graph</label>
+          <input type="number" id="max-rfd" class="w-full p-2 border rounded-md" value="1000" min="100" max="5000">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Target RFD (kg/s)
+          </label>
+          <input type="number" id="target-rfd" class="w-full p-2 border rounded-md" value="500" min="0">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Show Target Lines
+          </label>
+          <div class="flex flex-col space-y-2 mt-2">
+            <div class="flex items-center">
+              <input type="checkbox" id="show-target" class="h-4 w-4 text-blue-600" checked>
+              <label for="show-target" class="ml-2 text-gray-700">Force target line</label>
+            </div>
+            <div class="flex items-center">
+              <input type="checkbox" id="show-rfd-target" class="h-4 w-4 text-purple-600" checked>
+              <label for="show-rfd-target" class="ml-2 text-gray-700">RFD target line</label>
+            </div>
           </div>
         </div>
 
-        <!-- New Calibration Section -->
+        <!-- Calibration Section -->
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">
             Calibration
           </label>
           <div class="flex space-x-2">
             <input type="number" id="calibration-weight" class="w-full p-2 border rounded-md" value="1.0" min="0.1" step="0.1" placeholder="Weight in kg">
-            <button id="calibrate-button" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition" disabled>
+            <button id="calibrate-button" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition opacity-50 cursor-not-allowed" disabled>
               Calibrate
             </button>
           </div>
