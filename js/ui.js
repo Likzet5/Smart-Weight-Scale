@@ -29,14 +29,16 @@ export class UI {
     this.calibrationWeightInput = document.getElementById('calibration-weight');
     this.calibrateBtn = document.getElementById('calibrate-button');
 
-    // Add to _initializeElements method in UI class
+    // Connection menu elements
     this.connectionMenuButton = document.getElementById('connection-menu-button');
     this.connectionMenu = document.getElementById('connection-menu');
     this.connectionIndicator = document.getElementById('connection-indicator');
+    
     // Set up connection menu toggle
     this.connectionMenuButton.addEventListener('click', () => {
       this.connectionMenu.classList.toggle('hidden');
     });  
+    
     // Close the menu when clicking outside
     document.addEventListener('click', (event) => {
       if (!this.connectionMenuButton.contains(event.target) && 
@@ -88,10 +90,42 @@ export class UI {
     this.showTarget = document.getElementById('show-target');
     this.showRFDTarget = document.getElementById('show-rfd-target');
     
+    // Tab interface handling
+    this.generalTabBtn = document.getElementById('general-tab-btn');
+    this.calibrationTabBtn = document.getElementById('calibration-tab-btn');
+    this.generalSettingsTab = document.getElementById('general-settings-tab');
+    this.calibrationTab = document.getElementById('calibration-tab');
+
+    // Set up tab switching
+    this.generalTabBtn.addEventListener('click', () => {
+      // Show general settings, hide calibration
+      this.generalSettingsTab.classList.remove('hidden');
+      this.calibrationTab.classList.add('hidden');
+      
+      // Update tab button styles
+      this.generalTabBtn.classList.add('text-blue-600', 'border-blue-600');
+      this.generalTabBtn.classList.remove('text-gray-500', 'border-transparent');
+      
+      this.calibrationTabBtn.classList.remove('text-blue-600', 'border-blue-600');
+      this.calibrationTabBtn.classList.add('text-gray-500', 'border-transparent');
+    });
+
+    this.calibrationTabBtn.addEventListener('click', () => {
+      // Show calibration, hide general settings
+      this.generalSettingsTab.classList.add('hidden');
+      this.calibrationTab.classList.remove('hidden');
+      
+      // Update tab button styles
+      this.calibrationTabBtn.classList.add('text-blue-600', 'border-blue-600');
+      this.calibrationTabBtn.classList.remove('text-gray-500', 'border-transparent');
+      
+      this.generalTabBtn.classList.remove('text-blue-600', 'border-blue-600');
+      this.generalTabBtn.classList.add('text-gray-500', 'border-transparent');
+    });
+    
     // Display toggles
     this.showForceLine = document.getElementById('show-force-line');
     this.showRFDLine = document.getElementById('show-rfd-line');
-    this._updateMetricVisibility(); // Initial layout based on checkbox defaults
     
     // Add toggle event listeners
     this.showForceLine.addEventListener('change', () => this._updateMetricVisibility());
@@ -192,8 +226,8 @@ export class UI {
       this.demoBtn.classList.add("bg-red-600", "hover:bg-red-700");
       
       this.connectionStatus.textContent = "Demo Mode";
-      this.connectionStatus.classList.remove("text-red-600");
-      this.connectionStatus.classList.add("text-green-600");
+      this.connectionIndicator.classList.remove("bg-red-500");
+      this.connectionIndicator.classList.add("bg-green-500");
     } else {
       this.demoBtn.textContent = "Start Demo Mode";
       this.demoBtn.classList.remove("bg-red-600", "hover:bg-red-700");
@@ -349,7 +383,7 @@ export class UI {
     // Connection buttons
     this.connectBtn.disabled = activeConnection;
     this.disconnectBtn.disabled = !this.connected;
-    this.tareBtn.disabled = !this.connected;
+    this.tareBtn.disabled = !this.connected || this.recording;
     this.calibrateBtn.disabled = !this.connected || this.recording;
     
     // Recording buttons
