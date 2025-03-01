@@ -1,79 +1,95 @@
-/* Main application styles */
-body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+/* Tab panel styling */
+.tab-panel {
+  transition: opacity 0.15s ease-in-out;
 }
 
-/* Force gauge styles */
-.force-gauge {
-  width: 150px;
-  height: 150px;
-  margin: 0 auto;
-  position: relative;
-  border-radius: 50%;
-  background: #f3f4f6;
-  overflow: hidden;
+/* Section visibility for toggle controls */
+.section-hidden {
+  display: none;
 }
 
-@media (min-width: 768px) {
-  .force-gauge {
-    width: 180px;
-    height: 180px;
-  }
-}
-
-@media (min-width: 1024px) {
-  .force-gauge {
-    width: 200px;
-    height: 200px;
-  }
-}
-
-.gauge-fill {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: linear-gradient(to top, #3b82f6, #60a5fa);
-  transition: height 0.3s ease;
-}
-
-.rfd-gauge-fill {
-  background: linear-gradient(to top, #8b5cf6, #a78bfa);
-}
-
-.gauge-value {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 1.75rem;
-  font-weight: bold;
-  z-index: 2;
-}
-
-.gauge-unit {
-  position: absolute;
-  top: 65%;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 0.875rem;
-  color: #4b5563;
-  z-index: 2;
-}
-
-/* Chart container */
-.chart-container {
-  height: 300px;
-  width: 100%;
-}
-
-@media (min-width: 768px) {
+/* Chart styling for mobile */
+@media (max-width: 768px) {
   .chart-container {
-    height: 400px;
+    height: 250px;
+    margin-left: -10px;
+    margin-right: -10px;
+    width: calc(100% + 20px);
+    max-width: unset;
+    overflow: hidden;
+  }
+  
+  /* Adjust font sizes for better readability on mobile */
+  .recharts-text.recharts-cartesian-axis-tick-value {
+    font-size: 10px;
+  }
+  
+  /* Ensure chart takes full width */
+  .recharts-responsive-container {
+    width: 100% !important;
+  }
+  
+  /* Adjust stats container height for mobile */
+  .stats-container {
+    height: auto !important;
+    min-height: 100px;
   }
 }
 
-/* Animation for recording indicator */
+/* Improve tab layout on mobile */
+@media (max-width: 640px) {
+  .tabs-container {
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
+  }
+  
+  .tab-panel {
+    padding: 0.5rem;
+  }
+  
+  /* Make sure buttons are easier to tap */
+  button {
+    min-height: 44px; /* Apple's recommended minimum tap target size */
+  }
+  
+  /* Exclude tab buttons from min-height */
+  button.min-h-0 {
+    min-height: 0;
+  }
+}
+
+/* Custom range input styles optimized for mobile */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px; /* Larger for mobile */
+  height: 20px; /* Larger for mobile */
+  border-radius: 50%;
+  background: #8b5cf6;
+  cursor: pointer;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 20px; /* Larger for mobile */
+  height: 20px; /* Larger for mobile */
+  border-radius: 50%;
+  background: #8b5cf6;
+  cursor: pointer;
+  border: none;
+}
+
+/* Recording dot animation */
 @keyframes pulse {
   0% { opacity: 0.7; }
   50% { opacity: 1; }
@@ -90,53 +106,13 @@ body {
   animation: pulse 1.5s infinite;
 }
 
-/* Custom range input styles */
-input[type="range"] {
-  -webkit-appearance: none;
-  appearance: none;
-  height: 8px;
-  background: #e5e7eb;
-  border-radius: 4px;
-  outline: none;
-}
-
-input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: #8b5cf6;
-  cursor: pointer;
-}
-
-input[type="range"]::-moz-range-thumb {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: #8b5cf6;
-  cursor: pointer;
-  border: none;
-}
-
-/* Connection indicator styles */
-#connection-indicator {
-  transition: background-color 0.3s ease;
-}
-
-/* Connection menu styles */
-#connection-menu {
-  min-width: 150px;
-  transition: opacity 0.2s ease;
-}
-
-/* Section visibility for toggle controls */
-.section-hidden {
-  display: none;
-}
-
-/* Responsive adjustments */
+/* Gauge sizing for better mobile experience */
 @media (max-width: 640px) {
+  .force-gauge {
+    width: 120px;
+    height: 120px;
+  }
+  
   .gauge-value {
     font-size: 1.5rem;
   }
@@ -144,14 +120,4 @@ input[type="range"]::-moz-range-thumb {
   .gauge-unit {
     font-size: 0.75rem;
   }
-}
-
-/* Tab panel styling */
-.tab-panel {
-  transition: opacity 0.15s ease-in-out;
-}
-
-/* Section visibility for toggle controls */
-.section-hidden {
-  display: none;
 }
