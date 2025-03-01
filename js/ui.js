@@ -91,6 +91,7 @@ export class UI {
     // Display toggles
     this.showForceLine = document.getElementById('show-force-line');
     this.showRFDLine = document.getElementById('show-rfd-line');
+    this._updateMetricVisibility(); // Initial layout based on checkbox defaults
     
     // Add toggle event listeners
     this.showForceLine.addEventListener('change', () => this._updateMetricVisibility());
@@ -129,6 +130,26 @@ export class UI {
     // Update section visibility
     this.forceSection.classList.toggle('section-hidden', !showForce);
     this.rfdSection.classList.toggle('section-hidden', !showRFD);
+    
+    // Get container element
+    const container = document.getElementById('measurements-container');
+    
+    // Update container layout based on what's visible
+    if (showForce && showRFD) {
+      // If both are visible, use grid layout
+      container.className = 'grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4';
+      
+      // Remove the bottom margin from sections when in grid
+      this.forceSection.classList.remove('mb-4');
+      this.rfdSection.classList.remove('mb-4');
+    } else {
+      // If only one is visible, use normal layout
+      container.className = 'mb-4';
+      
+      // Re-add the bottom margin to sections when not in grid
+      this.forceSection.classList.add('mb-4');
+      this.rfdSection.classList.add('mb-4');
+    }
   }
   
   /**
