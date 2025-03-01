@@ -49,27 +49,29 @@
       </div>
     </div>
 
-    <!-- Connection Status -->
-    <div class="bg-white rounded-xl shadow p-6 mb-8">
-      <div class="flex flex-wrap items-center justify-between">
+    <!-- Connection Status Bar -->
+    <div class="bg-white rounded-xl shadow p-3 mb-4 flex items-center justify-between">
+      <div class="flex items-center">
+        <div id="connection-indicator" class="h-3 w-3 rounded-full bg-red-500 mr-2"></div>
         <div>
-          <h2 class="text-xl font-semibold mb-2">Device Connection</h2>
-          <p id="connection-status" class="text-red-600 font-medium">Not Connected</p>
-          <p id="device-name" class="text-gray-500 text-sm mt-1 hidden"></p>
+          <span id="connection-status" class="font-medium">Not Connected</span>
+          <span id="device-name" class="text-gray-500 text-sm ml-2 hidden"></span>
         </div>
-        <div class="grid grid-cols-3 gap-2 mt-4 sm:mt-0">
-          <button id="connect-button" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">
+      </div>
+      <div class="relative">
+        <button id="connection-menu-button" class="px-2 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded transition">
+          Connection ▾
+        </button>
+        <div id="connection-menu" class="absolute right-0 mt-1 bg-white rounded-lg shadow-lg p-2 hidden z-10">
+          <button id="connect-button" class="block w-full text-left px-3 py-2 text-sm hover:bg-blue-100 rounded-lg transition mb-1">
             Connect
           </button>
-          <button id="disconnect-button" class="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition opacity-50 cursor-not-allowed" disabled>
+          <button id="disconnect-button" class="block w-full text-left px-3 py-2 text-sm hover:bg-red-100 rounded-lg transition opacity-50 cursor-not-allowed" disabled>
             Disconnect
-          </button>
-          <button id="tare-button" class="px-3 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition opacity-50 cursor-not-allowed" disabled>
-            Tare
           </button>
         </div>
       </div>
-      <p id="error-message" class="text-red-500 mt-2 hidden"></p>
+      <p id="error-message" class="text-red-500 text-sm hidden"></p>
     </div>
 
     <!-- Force Measurements - Conditionally visible -->
@@ -268,21 +270,35 @@
           </div>
         </div>
 
-        <!-- Calibration Section -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Calibration
-          </label>
-          <div class="flex space-x-2">
-            <input type="number" id="calibration-weight" class="w-full p-2 border rounded-md" value="1.0" min="0.1" step="0.1" placeholder="Weight in kg">
-            <button id="calibrate-button" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition opacity-50 cursor-not-allowed" disabled>
-              Calibrate
-            </button>
+        <!-- Calibration Panel -->
+        <div class="bg-white rounded-xl shadow p-4 mb-4">
+          <h3 class="text-lg font-medium mb-3">Calibration</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <div class="flex justify-between mb-2">
+                <span class="text-gray-600">Current Tare Offset:</span>
+                <span id="tare-value" class="font-medium">0.0 kg</span>
+              </div>
+              <button id="tare-button" class="w-full px-3 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition opacity-50 cursor-not-allowed mb-2" disabled>
+                Tare Scale (Zero)
+              </button>
+              <p class="text-xs text-gray-500">Use tare to zero the scale before measurement.</p>
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Known Weight Calibration
+              </label>
+              <div class="flex space-x-2">
+                <input type="number" id="calibration-weight" class="w-full p-2 border rounded-md" value="1.0" min="0.1" step="0.1" placeholder="Weight in kg">
+                <button id="calibrate-button" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition opacity-50 cursor-not-allowed" disabled>
+                  Calibrate
+                </button>
+              </div>
+              <p class="text-xs text-gray-500 mt-1">Place known weight on scale and enter its value in kg</p>
+            </div>
           </div>
-          <p class="text-xs text-gray-500 mt-1">Place a known weight on the scale and enter its value in kg</p>
         </div>
-      </div>
-    </div>
 
     <!-- Demo Mode -->
     <div class="bg-white rounded-xl shadow p-6 mb-8">
