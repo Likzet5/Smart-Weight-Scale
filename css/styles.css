@@ -119,6 +119,17 @@ input[type="range"]::-moz-range-thumb {
   border: none;
 }
 
+/* Connection indicator styles */
+#connection-indicator {
+  transition: background-color 0.3s ease;
+}
+
+/* Connection menu styles */
+#connection-menu {
+  min-width: 150px;
+  transition: opacity 0.2s ease;
+}
+
 /* Section visibility for toggle controls */
 .section-hidden {
   display: none;
