@@ -3,7 +3,7 @@
  * Handles DOM updates, event binding, and interface state
  * Enhanced with RFD (Rate of Force Development) support
  * Mobile-optimized
- */
+ */ 
 export class UI {
   constructor() {
     // Initialize UI elements references
