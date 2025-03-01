@@ -74,10 +74,10 @@
       <p id="error-message" class="text-red-500 text-sm hidden"></p>
     </div>
 
-    <!-- Force Measurements - Conditionally visible -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-      <!-- Force Measurements Section -->
-      <div id="force-section" class="bg-white rounded-xl shadow p-4">
+  <!-- Add this container with conditional layout -->
+  <div id="measurements-container" class="mb-4">
+  <!-- Force Measurements Section -->
+  <div id="force-section" class="bg-white rounded-xl shadow p-4 mb-4">
     <h3 class="text-lg font-medium mb-4 text-blue-700">Force Measurements</h3>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <!-- Current Force Gauge -->
@@ -124,7 +124,7 @@
     </div>
 
     <!-- RFD Measurements Section -->
-    <div id="rfd-section" class="bg-white rounded-xl shadow p-4">
+    <div id="rfd-section" class="bg-white rounded-xl shadow p-4 mb-4">
       <h3 class="text-lg font-medium mb-4 text-purple-700">RFD Measurements</h3>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <!-- Current RFD Gauge -->
