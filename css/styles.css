@@ -145,3 +145,13 @@ input[type="range"]::-moz-range-thumb {
     font-size: 0.75rem;
   }
 }
+
+/* Tab panel styling */
+.tab-panel {
+  transition: opacity 0.15s ease-in-out;
+}
+
+/* Section visibility for toggle controls */
+.section-hidden {
+  display: none;
+}
