@@ -13,14 +13,14 @@
 <body class="bg-gray-100 min-h-screen">
   <!-- App Header with integrated connection controls -->
   <header class="bg-blue-600 text-white shadow">
-    <div class="container mx-auto py-4 px-6">
-      <div class="flex justify-between items-center">
+    <div class="container mx-auto py-4 px-4">
+      <!-- Header content for larger screens -->
+      <div class="hidden md:flex justify-between items-center">
         <div>
           <h1 class="text-3xl font-bold">Strength Training Monitor</h1>
           <p class="text-blue-100">Tindeq API Compatible</p>
         </div>
         
-        <!-- Connection Controls in Header -->
         <div class="flex items-center">
           <div class="flex items-center mr-4">
             <div id="connection-indicator" class="h-3 w-3 rounded-full bg-red-500 mr-2"></div>
@@ -42,12 +42,38 @@
           </div>
         </div>
       </div>
+      
+      <!-- Mobile layout -->
+      <div class="flex md:hidden flex-col">
+        <div class="flex justify-between items-center">
+          <h1 class="text-2xl font-bold">Strength Training Monitor</h1>
+          <div class="flex items-center">
+            <div id="mobile-connection-indicator" class="h-3 w-3 rounded-full bg-red-500 mr-2"></div>
+            <span id="mobile-connection-status" class="text-sm">Not Connected</span>
+          </div>
+        </div>
+        <p class="text-blue-100 text-sm">Tindeq API Compatible</p>
+        
+        <!-- Connection buttons in a row with larger tap targets -->
+        <div class="flex justify-between mt-4">
+          <button id="mobile-connect-button" class="flex-1 mr-2 py-2 bg-green-600 hover:bg-green-700 text-white text-center rounded-lg transition">
+            Connect
+          </button>
+          <button id="mobile-disconnect-button" class="flex-1 mx-2 py-2 bg-red-600 hover:bg-red-700 text-white text-center rounded-lg transition opacity-50 cursor-not-allowed" disabled>
+            Disconnect
+          </button>
+          <button id="mobile-demo-button" class="flex-1 ml-2 py-2 bg-purple-600 hover:bg-purple-700 text-white text-center rounded-lg transition">
+            Demo
+          </button>
+        </div>
+      </div>
+      
       <p id="error-message" class="text-white text-sm mt-2 hidden"></p>
     </div>
   </header>
 
   <!-- Main Content -->
-  <main class="container mx-auto px-6 py-8">
+  <main class="container mx-auto px-4 sm:px-6 py-4 sm:py-8">
     <!-- Web Bluetooth Compatibility Check -->
     <div id="compatibility-check" class="hidden bg-amber-100 border-l-4 border-amber-500 p-4 rounded-lg mb-4">
       <h2 class="font-bold text-lg text-amber-800">Web Bluetooth Not Supported</h2>
@@ -57,7 +83,7 @@
       </p>
     </div>
 
-    <!-- Add this container with conditional layout -->
+    <!-- Measurements container with conditional layout -->
     <div id="measurements-container" class="mb-4">
       <!-- Force Measurements Section -->
       <div id="force-section" class="bg-white rounded-xl shadow p-4 mb-4">
@@ -86,10 +112,10 @@
           <!-- Force Stats -->
           <div>
             <h4 class="text-center text-gray-600 mb-2">Force Statistics</h4>
-            <div class="bg-gray-50 p-3 rounded-lg h-36 flex flex-col justify-center">
+            <div class="bg-gray-50 p-3 rounded-lg flex flex-col justify-center stats-container">
               <div class="grid grid-cols-1 gap-y-2">
                 <div class="flex justify-between">
-                  <span class="text-gray-600">Time to Peak Force:</span>
+                  <span class="text-gray-600">Time to Peak:</span>
                   <span id="time-to-peak-force" class="font-medium">0.0s</span>
                 </div>
                 <div class="flex justify-between">
@@ -133,10 +159,10 @@
           <!-- RFD Stats -->
           <div>
             <h4 class="text-center text-gray-600 mb-2">RFD Statistics</h4>
-            <div class="bg-gray-50 p-3 rounded-lg h-36 flex flex-col justify-center">
+            <div class="bg-gray-50 p-3 rounded-lg flex flex-col justify-center stats-container">
               <div class="grid grid-cols-1 gap-y-2">
                 <div class="flex justify-between">
-                  <span class="text-gray-600">Time to Peak RFD:</span>
+                  <span class="text-gray-600">Time to Peak:</span>
                   <span id="time-to-peak-rfd" class="font-medium">0.0s</span>
                 </div>
                 <div class="flex justify-between">
@@ -146,7 +172,7 @@
                 <div class="flex justify-between">
                   <span class="text-gray-600">RFD Window:</span>
                   <div class="inline-flex items-center">
-                    <input id="rfd-window" type="range" min="10" max="500" value="100" class="w-20 h-2 mr-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    <input id="rfd-window" type="range" min="10" max="500" value="100" class="w-16 sm:w-20 h-2 mr-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
                     <span id="rfd-window-value" class="font-medium">100ms</span>
                   </div>
                 </div>
@@ -157,7 +183,7 @@
       </div>
     </div>
 
-    <!-- Recording Controls (full width) -->
+    <!-- Recording Controls (full width, mobile optimized) -->
     <div class="bg-white rounded-xl shadow p-4 mb-4">
       <h3 class="text-lg font-medium text-center mb-3">Recording Controls</h3>
       <div class="flex flex-col items-center justify-center">
@@ -165,23 +191,23 @@
           <span class="recording-dot"></span>
           <span class="font-medium text-red-600">RECORDING</span>
         </div>
-        <div class="text-4xl font-bold" id="recording-time">0.0</div>
+        <div class="text-4xl sm:text-5xl font-bold" id="recording-time">0.0</div>
         <div class="text-sm text-gray-500 mt-1 mb-4">seconds</div>
-        <div class="flex justify-center gap-3">
-          <button id="start-recording" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition opacity-50 cursor-not-allowed" disabled>
+        <div class="flex justify-center gap-2 sm:gap-3 w-full max-w-md recording-controls-buttons">
+          <button id="start-recording" class="px-2 sm:px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition opacity-50 cursor-not-allowed flex-1" disabled>
             Start
           </button>
-          <button id="stop-recording" class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition opacity-50 cursor-not-allowed" disabled>
+          <button id="stop-recording" class="px-2 sm:px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition opacity-50 cursor-not-allowed flex-1" disabled>
             Stop
           </button>
-          <button id="reset-data" class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition opacity-50 cursor-not-allowed" disabled>
+          <button id="reset-data" class="px-2 sm:px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition opacity-50 cursor-not-allowed flex-1" disabled>
             Reset
           </button>
         </div>
       </div>
     </div>
 
-    <!-- Data Visualization -->
+    <!-- Data Visualization (mobile optimized) -->
     <div class="bg-white rounded-xl shadow p-4 mb-4">
       <h3 class="text-lg font-medium mb-3">Data Visualization</h3>
       <div id="chart-container" class="chart-container">
@@ -189,23 +215,23 @@
       </div>
     </div>
 
-    <!-- Settings Section with Tabs -->
+    <!-- Settings Section with Tabs (mobile optimized) -->
     <div class="bg-white rounded-xl shadow p-4 mb-4">
-      <!-- Tab Navigation -->
-      <div class="border-b border-gray-200 mb-4">
+      <!-- Tab Navigation (scroll on mobile) -->
+      <div class="border-b border-gray-200 mb-4 tabs-container">
         <ul class="flex flex-wrap -mb-px">
           <li class="mr-2">
-            <button id="general-tab-btn" class="inline-block p-2 text-blue-600 border-b-2 border-blue-600 rounded-t-lg active">
+            <button id="general-tab-btn" class="inline-block p-2 text-blue-600 border-b-2 border-blue-600 rounded-t-lg active min-h-0">
               General Settings
             </button>
           </li>
           <li class="mr-2">
-            <button id="display-tab-btn" class="inline-block p-2 text-gray-500 hover:text-gray-600 border-b-2 border-transparent rounded-t-lg">
+            <button id="display-tab-btn" class="inline-block p-2 text-gray-500 hover:text-gray-600 border-b-2 border-transparent rounded-t-lg min-h-0">
               Display Controls
             </button>
           </li>
           <li class="mr-2">
-            <button id="calibration-tab-btn" class="inline-block p-2 text-gray-500 hover:text-gray-600 border-b-2 border-transparent rounded-t-lg">
+            <button id="calibration-tab-btn" class="inline-block p-2 text-gray-500 hover:text-gray-600 border-b-2 border-transparent rounded-t-lg min-h-0">
               Calibration
             </button>
           </li>
@@ -216,7 +242,7 @@
       <div id="settings-tab-content">
         <!-- General Settings Tab (initially visible) -->
         <div id="general-settings-tab" class="tab-panel">
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">
                 Weight Unit
@@ -332,8 +358,8 @@
   </main>
 
   <!-- Footer -->
-  <footer class="bg-gray-800 text-white py-6">
-    <div class="container mx-auto px-6">
+  <footer class="bg-gray-800 text-white py-4 sm:py-6">
+    <div class="container mx-auto px-4 sm:px-6">
       <p>© 2025 Strength Training Monitor. All rights reserved.</p>
       <p class="text-gray-400 text-sm mt-2">Uses Web Bluetooth to connect directly to your device. No data is sent to any server.</p>
     </div>
