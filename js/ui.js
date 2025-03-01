@@ -28,10 +28,22 @@ export class UI {
     this.errorMessage = document.getElementById('error-message');
     this.calibrationWeightInput = document.getElementById('calibration-weight');
     this.calibrateBtn = document.getElementById('calibrate-button');
+
+    // Add to _initializeElements method in UI class
     this.connectionMenuButton = document.getElementById('connection-menu-button');
     this.connectionMenu = document.getElementById('connection-menu');
     this.connectionIndicator = document.getElementById('connection-indicator');
-    this.tareValue = document.getElementById('tare-value');
+    // Set up connection menu toggle
+    this.connectionMenuButton.addEventListener('click', () => {
+      this.connectionMenu.classList.toggle('hidden');
+    });  
+    // Close the menu when clicking outside
+    document.addEventListener('click', (event) => {
+      if (!this.connectionMenuButton.contains(event.target) && 
+          !this.connectionMenu.contains(event.target)) {
+        this.connectionMenu.classList.add('hidden');
+      }
+    });
     
     // Force display
     this.currentForceEl = document.getElementById('current-force');
@@ -100,19 +112,6 @@ export class UI {
     if (!navigator.bluetooth) {
       this.compatibilityCheck.classList.remove('hidden');
     }
-
-    // Set up connection menu toggle
-    this.connectionMenuButton.addEventListener('click', () => {
-      this.connectionMenu.classList.toggle('hidden');
-    });
-    
-    // Close the menu when clicking outside
-    document.addEventListener('click', (event) => {
-      if (!this.connectionMenuButton.contains(event.target) && 
-          !this.connectionMenu.contains(event.target)) {
-        this.connectionMenu.classList.add('hidden');
-      }
-    });
     
     // Initialize display based on toggle states
     this._updateMetricVisibility();
@@ -347,13 +346,6 @@ export class UI {
     enabledBtns.forEach(btn => {
       btn.classList.remove('opacity-50', 'cursor-not-allowed');
     });
-  }
-
-  // Add this new method to the UI class
-  updateTareValue(tareValue, unit = 'kg') {
-    if (this.tareValue) {
-      this.tareValue.textContent = `${tareValue.toFixed(2)} ${unit}`;
-    }
   }
   
   /**
