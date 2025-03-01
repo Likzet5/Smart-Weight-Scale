@@ -28,24 +28,7 @@ export class UI {
     this.errorMessage = document.getElementById('error-message');
     this.calibrationWeightInput = document.getElementById('calibration-weight');
     this.calibrateBtn = document.getElementById('calibrate-button');
-
-    // Connection menu elements
-    this.connectionMenuButton = document.getElementById('connection-menu-button');
-    this.connectionMenu = document.getElementById('connection-menu');
     this.connectionIndicator = document.getElementById('connection-indicator');
-    
-    // Set up connection menu toggle
-    this.connectionMenuButton.addEventListener('click', () => {
-      this.connectionMenu.classList.toggle('hidden');
-    });  
-    
-    // Close the menu when clicking outside
-    document.addEventListener('click', (event) => {
-      if (!this.connectionMenuButton.contains(event.target) && 
-          !this.connectionMenu.contains(event.target)) {
-        this.connectionMenu.classList.add('hidden');
-      }
-    });
     
     // Force display
     this.currentForceEl = document.getElementById('current-force');
@@ -92,27 +75,53 @@ export class UI {
     
     // Tab interface handling
     this.generalTabBtn = document.getElementById('general-tab-btn');
+    this.displayTabBtn = document.getElementById('display-tab-btn');
     this.calibrationTabBtn = document.getElementById('calibration-tab-btn');
     this.generalSettingsTab = document.getElementById('general-settings-tab');
+    this.displayTab = document.getElementById('display-tab');
     this.calibrationTab = document.getElementById('calibration-tab');
 
-    // Set up tab switching
+    // Set up tab switching for general tab
     this.generalTabBtn.addEventListener('click', () => {
-      // Show general settings, hide calibration
+      // Show general settings, hide others
       this.generalSettingsTab.classList.remove('hidden');
+      this.displayTab.classList.add('hidden');
       this.calibrationTab.classList.add('hidden');
       
       // Update tab button styles
       this.generalTabBtn.classList.add('text-blue-600', 'border-blue-600');
       this.generalTabBtn.classList.remove('text-gray-500', 'border-transparent');
       
+      this.displayTabBtn.classList.remove('text-blue-600', 'border-blue-600');
+      this.displayTabBtn.classList.add('text-gray-500', 'border-transparent');
+      
       this.calibrationTabBtn.classList.remove('text-blue-600', 'border-blue-600');
       this.calibrationTabBtn.classList.add('text-gray-500', 'border-transparent');
     });
 
-    this.calibrationTabBtn.addEventListener('click', () => {
-      // Show calibration, hide general settings
+    // Set up tab switching for display tab
+    this.displayTabBtn.addEventListener('click', () => {
+      // Show display tab, hide others
       this.generalSettingsTab.classList.add('hidden');
+      this.displayTab.classList.remove('hidden');
+      this.calibrationTab.classList.add('hidden');
+      
+      // Update tab button styles
+      this.displayTabBtn.classList.add('text-blue-600', 'border-blue-600');
+      this.displayTabBtn.classList.remove('text-gray-500', 'border-transparent');
+      
+      this.generalTabBtn.classList.remove('text-blue-600', 'border-blue-600');
+      this.generalTabBtn.classList.add('text-gray-500', 'border-transparent');
+      
+      this.calibrationTabBtn.classList.remove('text-blue-600', 'border-blue-600');
+      this.calibrationTabBtn.classList.add('text-gray-500', 'border-transparent');
+    });
+
+    // Set up tab switching for calibration tab
+    this.calibrationTabBtn.addEventListener('click', () => {
+      // Show calibration, hide others
+      this.generalSettingsTab.classList.add('hidden');
+      this.displayTab.classList.add('hidden');
       this.calibrationTab.classList.remove('hidden');
       
       // Update tab button styles
@@ -121,6 +130,9 @@ export class UI {
       
       this.generalTabBtn.classList.remove('text-blue-600', 'border-blue-600');
       this.generalTabBtn.classList.add('text-gray-500', 'border-transparent');
+      
+      this.displayTabBtn.classList.remove('text-blue-600', 'border-blue-600');
+      this.displayTabBtn.classList.add('text-gray-500', 'border-transparent');
     });
     
     // Display toggles
@@ -221,7 +233,7 @@ export class UI {
     this.demoMode = enabled;
     
     if (enabled) {
-      this.demoBtn.textContent = "Stop Demo Mode";
+      this.demoBtn.textContent = "Stop Demo";
       this.demoBtn.classList.remove("bg-purple-600", "hover:bg-purple-700");
       this.demoBtn.classList.add("bg-red-600", "hover:bg-red-700");
       
@@ -229,7 +241,7 @@ export class UI {
       this.connectionIndicator.classList.remove("bg-red-500");
       this.connectionIndicator.classList.add("bg-green-500");
     } else {
-      this.demoBtn.textContent = "Start Demo Mode";
+      this.demoBtn.textContent = "Demo";
       this.demoBtn.classList.remove("bg-red-600", "hover:bg-red-700");
       this.demoBtn.classList.add("bg-purple-600", "hover:bg-purple-700");
       
@@ -350,8 +362,8 @@ export class UI {
    */
   showError(message) {
     this.errorMessage.textContent = message;
-    this.errorMessage.classList.remove('hidden', 'text-green-500');
-    this.errorMessage.classList.add('text-red-500');
+    this.errorMessage.classList.remove('hidden');
+    this.errorMessage.classList.add('text-white');
     
     // Auto hide after 5 seconds
     setTimeout(() => {
@@ -365,8 +377,8 @@ export class UI {
    */
   showSuccess(message) {
     this.errorMessage.textContent = message;
-    this.errorMessage.classList.remove('hidden', 'text-red-500');
-    this.errorMessage.classList.add('text-green-500');
+    this.errorMessage.classList.remove('hidden');
+    this.errorMessage.classList.add('text-white');
     
     // Auto hide after 5 seconds
     setTimeout(() => {
