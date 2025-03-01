@@ -32,7 +32,7 @@
 
     <!-- Display Controls -->
     <div class="bg-white rounded-xl shadow p-4 mb-4">
-      <h3 class="text-lg font-medium mb-4">Display Controls</h3>
+      <h3 class="text-lg font-medium mb-3">Display Controls</h3>
       <div class="flex flex-wrap gap-6">
         <label class="inline-flex items-center">
           <input type="checkbox" id="show-force-line" class="h-5 w-5 text-blue-600" checked>
@@ -42,7 +42,7 @@
           <input type="checkbox" id="show-rfd-line" class="h-5 w-5 text-purple-600" checked>
           <span class="ml-2 text-purple-600 font-medium">RFD Data</span>
         </label>
-        <p class="w-full text-sm text-gray-500 mt-2">
+        <p class="w-full text-sm text-gray-500 mt-1">
           Toggle controls affect all gauges, statistics, and chart data. 
           Data continues to be recorded even when display is disabled.
         </p>
@@ -74,97 +74,98 @@
       <p id="error-message" class="text-red-500 text-sm hidden"></p>
     </div>
 
-  <!-- Add this container with conditional layout -->
-  <div id="measurements-container" class="mb-4">
-  <!-- Force Measurements Section -->
-  <div id="force-section" class="bg-white rounded-xl shadow p-4 mb-4">
-    <h3 class="text-lg font-medium mb-4 text-blue-700">Force Measurements</h3>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <!-- Current Force Gauge -->
-        <div>
-          <h4 class="text-center text-gray-600 mb-3">Current Force</h4>
-          <div class="force-gauge">
-            <div id="current-force-fill" class="gauge-fill" style="height: 0%"></div>
-            <div id="current-force" class="gauge-value">0.0</div>
-            <div id="force-unit" class="gauge-unit">kg</div>
+    <!-- Add this container with conditional layout -->
+    <div id="measurements-container" class="mb-4">
+      <!-- Force Measurements Section -->
+      <div id="force-section" class="bg-white rounded-xl shadow p-4 mb-4">
+        <h3 class="text-lg font-medium mb-3 text-blue-700">Force Measurements</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Current Force Gauge -->
+          <div>
+            <h4 class="text-center text-gray-600 mb-2">Current Force</h4>
+            <div class="force-gauge">
+              <div id="current-force-fill" class="gauge-fill" style="height: 0%"></div>
+              <div id="current-force" class="gauge-value">0.0</div>
+              <div id="force-unit" class="gauge-unit">kg</div>
+            </div>
           </div>
-        </div>
 
-        <!-- Peak Force -->
-        <div>
-          <h4 class="text-center text-gray-600 mb-3">Peak Force</h4>
-          <div class="force-gauge">
-            <div id="peak-force-fill" class="gauge-fill" style="height: 0%"></div>
-            <div id="peak-force" class="gauge-value">0.0</div>
-            <div class="gauge-unit">kg</div>
+          <!-- Peak Force -->
+          <div>
+            <h4 class="text-center text-gray-600 mb-2">Peak Force</h4>
+            <div class="force-gauge">
+              <div id="peak-force-fill" class="gauge-fill" style="height: 0%"></div>
+              <div id="peak-force" class="gauge-value">0.0</div>
+              <div class="gauge-unit">kg</div>
+            </div>
           </div>
-        </div>
 
-        <!-- Force Stats -->
-        <div>
-          <h4 class="text-center text-gray-600 mb-3">Force Statistics</h4>
-          <div class="bg-gray-50 p-4 rounded-lg h-40 flex flex-col justify-center">
-            <div class="grid grid-cols-1 gap-y-3">
-              <div class="flex justify-between">
-                <span class="text-gray-600">Time to Peak Force:</span>
-                <span id="time-to-peak-force" class="font-medium">0.0s</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-gray-600">Average Force:</span>
-                <span id="avg-force" class="font-medium">0.0 kg</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-gray-600">Impulse:</span>
-                <span id="force-impulse" class="font-medium">0.0 kg·s</span>
+          <!-- Force Stats -->
+          <div>
+            <h4 class="text-center text-gray-600 mb-2">Force Statistics</h4>
+            <div class="bg-gray-50 p-3 rounded-lg h-36 flex flex-col justify-center">
+              <div class="grid grid-cols-1 gap-y-2">
+                <div class="flex justify-between">
+                  <span class="text-gray-600">Time to Peak Force:</span>
+                  <span id="time-to-peak-force" class="font-medium">0.0s</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-600">Average Force:</span>
+                  <span id="avg-force" class="font-medium">0.0 kg</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-600">Impulse:</span>
+                  <span id="force-impulse" class="font-medium">0.0 kg·s</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-
-    <!-- RFD Measurements Section -->
-    <div id="rfd-section" class="bg-white rounded-xl shadow p-4 mb-4">
-      <h3 class="text-lg font-medium mb-4 text-purple-700">RFD Measurements</h3>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <!-- Current RFD Gauge -->
-        <div>
-          <h4 class="text-center text-gray-600 mb-3">Current RFD</h4>
-          <div class="force-gauge">
-            <div id="current-rfd-fill" class="gauge-fill rfd-gauge-fill" style="height: 0%"></div>
-            <div id="current-rfd" class="gauge-value">0.0</div>
-            <div id="rfd-unit" class="gauge-unit">kg/s</div>
+      
+      <!-- RFD Measurements Section -->
+      <div id="rfd-section" class="bg-white rounded-xl shadow p-4 mb-4">
+        <h3 class="text-lg font-medium mb-3 text-purple-700">RFD Measurements</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Current RFD Gauge -->
+          <div>
+            <h4 class="text-center text-gray-600 mb-2">Current RFD</h4>
+            <div class="force-gauge">
+              <div id="current-rfd-fill" class="gauge-fill rfd-gauge-fill" style="height: 0%"></div>
+              <div id="current-rfd" class="gauge-value">0.0</div>
+              <div id="rfd-unit" class="gauge-unit">kg/s</div>
+            </div>
           </div>
-        </div>
 
-        <!-- Peak RFD -->
-        <div>
-          <h4 class="text-center text-gray-600 mb-3">Peak RFD</h4>
-          <div class="force-gauge">
-            <div id="peak-rfd-fill" class="gauge-fill rfd-gauge-fill" style="height: 0%"></div>
-            <div id="peak-rfd" class="gauge-value">0.0</div>
-            <div class="gauge-unit">kg/s</div>
+          <!-- Peak RFD -->
+          <div>
+            <h4 class="text-center text-gray-600 mb-2">Peak RFD</h4>
+            <div class="force-gauge">
+              <div id="peak-rfd-fill" class="gauge-fill rfd-gauge-fill" style="height: 0%"></div>
+              <div id="peak-rfd" class="gauge-value">0.0</div>
+              <div class="gauge-unit">kg/s</div>
+            </div>
           </div>
-        </div>
 
-        <!-- RFD Stats -->
-        <div>
-          <h4 class="text-center text-gray-600 mb-3">RFD Statistics</h4>
-          <div class="bg-gray-50 p-4 rounded-lg h-40 flex flex-col justify-center">
-            <div class="grid grid-cols-1 gap-y-3">
-              <div class="flex justify-between">
-                <span class="text-gray-600">Time to Peak RFD:</span>
-                <span id="time-to-peak-rfd" class="font-medium">0.0s</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-gray-600">Average RFD:</span>
-                <span id="avg-rfd" class="font-medium">0.0 kg/s</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-gray-600">RFD Window:</span>
-                <div class="inline-flex items-center">
-                  <input id="rfd-window" type="range" min="10" max="500" value="100" class="w-24 h-2 mr-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-                  <span id="rfd-window-value" class="font-medium">100ms</span>
+          <!-- RFD Stats -->
+          <div>
+            <h4 class="text-center text-gray-600 mb-2">RFD Statistics</h4>
+            <div class="bg-gray-50 p-3 rounded-lg h-36 flex flex-col justify-center">
+              <div class="grid grid-cols-1 gap-y-2">
+                <div class="flex justify-between">
+                  <span class="text-gray-600">Time to Peak RFD:</span>
+                  <span id="time-to-peak-rfd" class="font-medium">0.0s</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-600">Average RFD:</span>
+                  <span id="avg-rfd" class="font-medium">0.0 kg/s</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-600">RFD Window:</span>
+                  <div class="inline-flex items-center">
+                    <input id="rfd-window" type="range" min="10" max="500" value="100" class="w-20 h-2 mr-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    <span id="rfd-window-value" class="font-medium">100ms</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -173,138 +174,163 @@
       </div>
     </div>
 
-    <!-- Recording Controls -->
-    <div class="bg-white rounded-xl shadow p-4 mb-4">
-      <h3 class="text-lg font-medium text-center mb-4">Recording Controls</h3>
-      <div class="flex flex-col items-center justify-center">
-        <div id="recording-indicator" class="hidden mb-2">
-          <span class="recording-dot"></span>
-          <span class="font-medium text-red-600">RECORDING</span>
+    <!-- Recording Controls and Demo Mode side by side -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+      <!-- Recording Controls -->
+      <div class="bg-white rounded-xl shadow p-4">
+        <h3 class="text-lg font-medium text-center mb-3">Recording Controls</h3>
+        <div class="flex flex-col items-center justify-center">
+          <div id="recording-indicator" class="hidden mb-2">
+            <span class="recording-dot"></span>
+            <span class="font-medium text-red-600">RECORDING</span>
+          </div>
+          <div class="text-4xl font-bold" id="recording-time">0.0</div>
+          <div class="text-sm text-gray-500 mt-1 mb-4">seconds</div>
+          <div class="grid grid-cols-3 gap-3">
+            <button id="start-recording" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition opacity-50 cursor-not-allowed" disabled>
+              Start
+            </button>
+            <button id="stop-recording" class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition opacity-50 cursor-not-allowed" disabled>
+              Stop
+            </button>
+            <button id="reset-data" class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition opacity-50 cursor-not-allowed" disabled>
+              Reset
+            </button>
+          </div>
         </div>
-        <div class="text-4xl font-bold" id="recording-time">0.0</div>
-        <div class="text-sm text-gray-500 mt-1 mb-4">seconds</div>
-        <div class="grid grid-cols-3 gap-3">
-          <button id="start-recording" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition opacity-50 cursor-not-allowed" disabled>
-            Start
-          </button>
-          <button id="stop-recording" class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition opacity-50 cursor-not-allowed" disabled>
-            Stop
-          </button>
-          <button id="reset-data" class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition opacity-50 cursor-not-allowed" disabled>
-            Reset
-          </button>
-        </div>
+      </div>
+
+      <!-- Demo Mode - Moved here to be alongside recording controls -->
+      <div class="bg-white rounded-xl shadow p-4">
+        <h3 class="text-lg font-medium mb-3">Demo Mode</h3>
+        <p class="text-gray-600 mb-4">No device? You can try the app with simulated data.</p>
+        <button id="demo-button" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition">
+          Start Demo Mode
+        </button>
       </div>
     </div>
 
-    <!-- Force Graph -->
+    <!-- Data Visualization - Now full width on its own row -->
     <div class="bg-white rounded-xl shadow p-4 mb-4">
-      <h3 class="text-lg font-medium mb-4">Data Visualization</h3>
+      <h3 class="text-lg font-medium mb-3">Data Visualization</h3>
       <div id="chart-container" class="chart-container">
         <!-- Chart will be rendered here -->
       </div>
     </div>
 
-    <!-- Settings -->
+    <!-- Settings Section with Tabs -->
     <div class="bg-white rounded-xl shadow p-4 mb-4">
-      <h3 class="text-lg font-medium mb-4">Settings</h3>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Weight Unit
-          </label>
-          <select id="weight-unit" class="w-full p-2 border rounded-md">
-            <option value="kg">Kilograms (kg)</option>
-            <option value="lbs">Pounds (lbs)</option>
-            <option value="N">Newtons (N)</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Max Force Display Range
-          </label>
-          <input type="number" id="max-force" class="w-full p-2 border rounded-md" value="150" min="10" max="500">
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Record Duration (seconds)
-          </label>
-          <input type="number" id="record-duration" class="w-full p-2 border rounded-md" value="10" min="0" max="60">
-          <p class="text-xs text-gray-500 mt-1">Set to 0 for unlimited recording</p>
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Target Force (kg)
-          </label>
-          <input type="number" id="target-force" class="w-full p-2 border rounded-md" value="100" min="0">
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Max RFD Range (kg/s)
-          </label>
-          <input type="number" id="max-rfd" class="w-full p-2 border rounded-md" value="1000" min="100" max="5000">
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Target RFD (kg/s)
-          </label>
-          <input type="number" id="target-rfd" class="w-full p-2 border rounded-md" value="500" min="0">
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Show Target Lines
-          </label>
-          <div class="flex flex-col space-y-2 mt-2">
-            <div class="flex items-center">
-              <input type="checkbox" id="show-target" class="h-4 w-4 text-blue-600" checked>
-              <label for="show-target" class="ml-2 text-gray-700">Force target line</label>
-            </div>
-            <div class="flex items-center">
-              <input type="checkbox" id="show-rfd-target" class="h-4 w-4 text-purple-600" checked>
-              <label for="show-rfd-target" class="ml-2 text-gray-700">RFD target line</label>
-            </div>
-          </div>
-        </div>
-
-       <!-- Calibration Panel -->
-      <div class="bg-white rounded-xl shadow p-4 mb-4">
-        <h3 class="text-lg font-medium mb-3">Calibration</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <button id="tare-button" class="w-full px-3 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition opacity-50 cursor-not-allowed mb-2" disabled>
-              Tare Scale (Zero)
+      <!-- Tab Navigation -->
+      <div class="border-b border-gray-200 mb-4">
+        <ul class="flex flex-wrap -mb-px">
+          <li class="mr-2">
+            <button id="general-tab-btn" class="inline-block p-2 text-blue-600 border-b-2 border-blue-600 rounded-t-lg active">
+              General Settings
             </button>
-            <p class="text-xs text-gray-500">Use tare to zero the scale before measurement.</p>
-          </div>
-          
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              Known Weight Calibration
-            </label>
-            <div class="flex space-x-2">
-              <input type="number" id="calibration-weight" class="w-full p-2 border rounded-md" value="1.0" min="0.1" step="0.1" placeholder="Weight in kg">
-              <button id="calibrate-button" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition opacity-50 cursor-not-allowed" disabled>
-                Calibrate
-              </button>
+          </li>
+          <li class="mr-2">
+            <button id="calibration-tab-btn" class="inline-block p-2 text-gray-500 hover:text-gray-600 border-b-2 border-transparent rounded-t-lg">
+              Calibration
+            </button>
+          </li>
+        </ul>
+      </div>
+      
+      <!-- Tab Content -->
+      <div id="settings-tab-content">
+        <!-- General Settings Tab (initially visible) -->
+        <div id="general-settings-tab" class="tab-panel">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Weight Unit
+              </label>
+              <select id="weight-unit" class="w-full p-2 border rounded-md">
+                <option value="kg">Kilograms (kg)</option>
+                <option value="lbs">Pounds (lbs)</option>
+                <option value="N">Newtons (N)</option>
+              </select>
             </div>
-            <p class="text-xs text-gray-500 mt-1">Place known weight on scale and enter its value in kg</p>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Max Force Display Range
+              </label>
+              <input type="number" id="max-force" class="w-full p-2 border rounded-md" value="20" min="5" max="500">
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Record Duration (seconds)
+              </label>
+              <input type="number" id="record-duration" class="w-full p-2 border rounded-md" value="10" min="0" max="60">
+              <p class="text-xs text-gray-500 mt-1">Set to 0 for unlimited recording</p>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Target Force (kg)
+              </label>
+              <input type="number" id="target-force" class="w-full p-2 border rounded-md" value="10" min="0">
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Max RFD Range (kg/s)
+              </label>
+              <input type="number" id="max-rfd" class="w-full p-2 border rounded-md" value="40" min="10" max="5000">
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Target RFD (kg/s)
+              </label>
+              <input type="number" id="target-rfd" class="w-full p-2 border rounded-md" value="20" min="0">
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Show Target Lines
+              </label>
+              <div class="flex flex-col space-y-2 mt-2">
+                <div class="flex items-center">
+                  <input type="checkbox" id="show-target" class="h-4 w-4 text-blue-600" checked>
+                  <label for="show-target" class="ml-2 text-gray-700">Force target line</label>
+                </div>
+                <div class="flex items-center">
+                  <input type="checkbox" id="show-rfd-target" class="h-4 w-4 text-purple-600" checked>
+                  <label for="show-rfd-target" class="ml-2 text-gray-700">RFD target line</label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Calibration Tab (initially hidden) -->
+        <div id="calibration-tab" class="tab-panel hidden">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <button id="tare-button" class="w-full px-3 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition opacity-50 cursor-not-allowed mb-2" disabled>
+                Tare Scale (Zero)
+              </button>
+              <p class="text-xs text-gray-500">Use tare to zero the scale before measurement.</p>
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Known Weight Calibration
+              </label>
+              <div class="flex space-x-2">
+                <input type="number" id="calibration-weight" class="w-full p-2 border rounded-md" value="1.0" min="0.1" step="0.1" placeholder="Weight in kg">
+                <button id="calibrate-button" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition opacity-50 cursor-not-allowed" disabled>
+                  Calibrate
+                </button>
+              </div>
+              <p class="text-xs text-gray-500 mt-1">Place known weight on scale and enter its value in kg</p>
+            </div>
           </div>
         </div>
       </div>
-
-    <!-- Demo Mode -->
-    <div class="bg-white rounded-xl shadow p-4 mb-4">
-      <h3 class="text-lg font-medium mb-4">Demo Mode</h3>
-      <p class="text-gray-600 mb-4">No device? You can try the app with simulated data.</p>
-      <button id="demo-button" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition">
-        Start Demo Mode
-      </button>
     </div>
   </main>
 
