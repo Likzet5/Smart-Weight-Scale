@@ -2,6 +2,7 @@
  * UI management for the Strength Training Monitor
  * Handles DOM updates, event binding, and interface state
  * Enhanced with RFD (Rate of Force Development) support
+ * Mobile-optimized
  */
 export class UI {
   constructor() {
@@ -12,6 +13,20 @@ export class UI {
     this.connected = false;
     this.recording = false;
     this.demoMode = false;
+    
+    // Track mobile state
+    this.isMobile = window.innerWidth < 768;
+    
+    // Add window resize listener
+    window.addEventListener('resize', () => {
+      const wasMobile = this.isMobile;
+      this.isMobile = window.innerWidth < 768;
+      
+      // Only update if mobile state changed
+      if (wasMobile !== this.isMobile) {
+        this._updateMetricVisibility();
+      }
+    });
   }
   
   /**
@@ -19,16 +34,44 @@ export class UI {
    * @private
    */
   _initializeElements() {
-    // Connection panel
+    // Connection panel - Desktop
     this.connectBtn = document.getElementById('connect-button');
     this.disconnectBtn = document.getElementById('disconnect-button');
-    this.tareBtn = document.getElementById('tare-button');
     this.connectionStatus = document.getElementById('connection-status');
     this.deviceName = document.getElementById('device-name');
     this.errorMessage = document.getElementById('error-message');
+    this.connectionIndicator = document.getElementById('connection-indicator');
+    
+    // Connection panel - Mobile
+    this.mobileConnectBtn = document.getElementById('mobile-connect-button');
+    this.mobileDisconnectBtn = document.getElementById('mobile-disconnect-button');
+    this.mobileDemoBtn = document.getElementById('mobile-demo-button');
+    this.mobileConnectionStatus = document.getElementById('mobile-connection-status');
+    this.mobileConnectionIndicator = document.getElementById('mobile-connection-indicator');
+    
+    // Sync desktop/mobile buttons
+    if (this.mobileConnectBtn) {
+      this.mobileConnectBtn.addEventListener('click', () => {
+        if (this.connectBtn) this.connectBtn.click();
+      });
+    }
+    
+    if (this.mobileDisconnectBtn) {
+      this.mobileDisconnectBtn.addEventListener('click', () => {
+        if (this.disconnectBtn) this.disconnectBtn.click();
+      });
+    }
+    
+    if (this.mobileDemoBtn) {
+      this.mobileDemoBtn.addEventListener('click', () => {
+        if (this.demoBtn) this.demoBtn.click();
+      });
+    }
+    
+    // Calibration
+    this.tareBtn = document.getElementById('tare-button');
     this.calibrationWeightInput = document.getElementById('calibration-weight');
     this.calibrateBtn = document.getElementById('calibrate-button');
-    this.connectionIndicator = document.getElementById('connection-indicator');
     
     // Force display
     this.currentForceEl = document.getElementById('current-force');
@@ -182,12 +225,18 @@ export class UI {
     
     // Update container layout based on what's visible
     if (showForce && showRFD) {
-      // If both are visible, use grid layout
-      container.className = 'grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4';
+      // If both are visible, use grid layout (on non-mobile screens)
+      container.className = this.isMobile ? 'mb-4' : 'grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4';
       
-      // Remove the bottom margin from sections when in grid
-      this.forceSection.classList.remove('mb-4');
-      this.rfdSection.classList.remove('mb-4');
+      // Handle margins differently on mobile vs desktop when both are visible
+      if (this.isMobile) {
+        this.forceSection.classList.add('mb-4');
+        this.rfdSection.classList.add('mb-4');
+      } else {
+        // Remove the bottom margin from sections when in grid
+        this.forceSection.classList.remove('mb-4');
+        this.rfdSection.classList.remove('mb-4');
+      }
     } else {
       // If only one is visible, use normal layout
       container.className = 'mb-4';
@@ -206,22 +255,26 @@ export class UI {
   updateConnectionStatus(connected, deviceName = null) {
     this.connected = connected;
     
-    if (connected) {
-      this.connectionStatus.textContent = "Connected";
-      this.connectionIndicator.classList.remove("bg-red-500");
-      this.connectionIndicator.classList.add("bg-green-500");
+    // Update desktop status
+    if (this.connectionStatus) {
+      this.connectionStatus.textContent = connected ? "Connected" : "Not Connected";
+      this.connectionIndicator.classList.toggle("bg-red-500", !connected);
+      this.connectionIndicator.classList.toggle("bg-green-500", connected);
       
-      if (deviceName) {
+      if (deviceName && this.deviceName) {
         this.deviceName.textContent = deviceName;
-        this.deviceName.classList.remove("hidden");
+        this.deviceName.classList.toggle("hidden", !connected);
       }
-    } else {
-      this.connectionStatus.textContent = "Not Connected";
-      this.connectionIndicator.classList.remove("bg-green-500");
-      this.connectionIndicator.classList.add("bg-red-500");
-      this.deviceName.classList.add("hidden");
     }
     
+    // Update mobile status
+    if (this.mobileConnectionStatus) {
+      this.mobileConnectionStatus.textContent = connected ? "Connected" : "Not Connected";
+      this.mobileConnectionIndicator.classList.toggle("bg-red-500", !connected);
+      this.mobileConnectionIndicator.classList.toggle("bg-green-500", connected);
+    }
+    
+    // Update button states
     this.updateButtonStates();
   }
   
@@ -232,19 +285,35 @@ export class UI {
   updateDemoStatus(enabled) {
     this.demoMode = enabled;
     
+    // Update desktop button
+    if (this.demoBtn) {
+      this.demoBtn.textContent = enabled ? "Stop Demo" : "Demo";
+      this.demoBtn.classList.toggle("bg-purple-600", !enabled);
+      this.demoBtn.classList.toggle("hover:bg-purple-700", !enabled);
+      this.demoBtn.classList.toggle("bg-red-600", enabled);
+      this.demoBtn.classList.toggle("hover:bg-red-700", enabled);
+    }
+    
+    // Update mobile button
+    if (this.mobileDemoBtn) {
+      this.mobileDemoBtn.textContent = enabled ? "Stop Demo" : "Demo";
+      this.mobileDemoBtn.classList.toggle("bg-purple-600", !enabled);
+      this.mobileDemoBtn.classList.toggle("hover:bg-purple-700", !enabled);
+      this.mobileDemoBtn.classList.toggle("bg-red-600", enabled);
+      this.mobileDemoBtn.classList.toggle("hover:bg-red-700", enabled);
+    }
+    
+    // Update status indicators
     if (enabled) {
-      this.demoBtn.textContent = "Stop Demo";
-      this.demoBtn.classList.remove("bg-purple-600", "hover:bg-purple-700");
-      this.demoBtn.classList.add("bg-red-600", "hover:bg-red-700");
+      if (this.connectionStatus) this.connectionStatus.textContent = "Demo Mode";
+      if (this.mobileConnectionStatus) this.mobileConnectionStatus.textContent = "Demo Mode";
       
-      this.connectionStatus.textContent = "Demo Mode";
-      this.connectionIndicator.classList.remove("bg-red-500");
-      this.connectionIndicator.classList.add("bg-green-500");
+      if (this.connectionIndicator) this.connectionIndicator.classList.remove("bg-red-500");
+      if (this.connectionIndicator) this.connectionIndicator.classList.add("bg-green-500");
+      
+      if (this.mobileConnectionIndicator) this.mobileConnectionIndicator.classList.remove("bg-red-500");
+      if (this.mobileConnectionIndicator) this.mobileConnectionIndicator.classList.add("bg-green-500");
     } else {
-      this.demoBtn.textContent = "Demo";
-      this.demoBtn.classList.remove("bg-red-600", "hover:bg-red-700");
-      this.demoBtn.classList.add("bg-purple-600", "hover:bg-purple-700");
-      
       this.updateConnectionStatus(false);
     }
     
@@ -258,10 +327,8 @@ export class UI {
   updateRecordingStatus(recording) {
     this.recording = recording;
     
-    if (recording) {
-      this.recordingIndicator.classList.remove("hidden");
-    } else {
-      this.recordingIndicator.classList.add("hidden");
+    if (this.recordingIndicator) {
+      this.recordingIndicator.classList.toggle("hidden", !recording);
     }
     
     this.updateButtonStates();
@@ -392,16 +459,22 @@ export class UI {
   updateButtonStates() {
     const activeConnection = this.connected || this.demoMode;
     
-    // Connection buttons
-    this.connectBtn.disabled = activeConnection;
-    this.disconnectBtn.disabled = !this.connected;
-    this.tareBtn.disabled = !this.connected || this.recording;
-    this.calibrateBtn.disabled = !this.connected || this.recording;
+    // Connection buttons - Desktop
+    if (this.connectBtn) this.connectBtn.disabled = activeConnection;
+    if (this.disconnectBtn) this.disconnectBtn.disabled = !this.connected;
+    
+    // Connection buttons - Mobile
+    if (this.mobileConnectBtn) this.mobileConnectBtn.disabled = activeConnection;
+    if (this.mobileDisconnectBtn) this.mobileDisconnectBtn.disabled = !this.connected;
+    
+    // Calibration buttons
+    if (this.tareBtn) this.tareBtn.disabled = !this.connected || this.recording;
+    if (this.calibrateBtn) this.calibrateBtn.disabled = !this.connected || this.recording;
     
     // Recording buttons
-    this.startRecordingBtn.disabled = !activeConnection || this.recording;
-    this.stopRecordingBtn.disabled = !this.recording;
-    this.resetDataBtn.disabled = !activeConnection;
+    if (this.startRecordingBtn) this.startRecordingBtn.disabled = !activeConnection || this.recording;
+    if (this.stopRecordingBtn) this.stopRecordingBtn.disabled = !this.recording;
+    if (this.resetDataBtn) this.resetDataBtn.disabled = !activeConnection;
     
     // Apply visual state changes
     const disabledBtns = document.querySelectorAll('button[disabled]');
@@ -431,7 +504,8 @@ export class UI {
       showRFDTargetLine: this.showRFDTarget.checked,
       showForceLine: this.showForceLine.checked,
       showRFDLine: this.showRFDLine.checked,
-      rfdWindow: parseFloat(this.rfdWindowInput.value) / 1000 // Convert from ms to seconds
+      rfdWindow: parseFloat(this.rfdWindowInput.value) / 1000, // Convert from ms to seconds
+      isMobile: this.isMobile
     };
   }
 }
