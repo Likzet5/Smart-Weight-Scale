@@ -208,10 +208,13 @@ class App {
   async startRecording() {
     try {
       // Reset peak values and history
-      this.data.peakForce = 0;
-      this.data.peakRFD = 0;
       this.data.currentForce = 0;
+      this.data.peakForce = 0;
+      this.data.forceHistory = [];
       this.data.currentRFD = 0;
+      this.data.peakRFD = 0;
+      this.data.rfdHistory = [];
+        
       this.ui.updateForceDisplay(this.data.currentForce, 0, this.data.maxForceRange);
       this.ui.updateRFDDisplay(this.data.currentRFD, 0, this.data.maxRFDRange);
       
