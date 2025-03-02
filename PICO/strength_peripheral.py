@@ -33,6 +33,7 @@ class StrengthPeripheral:
         self._sample_buffer = []
         self._batch_size = 4  # Send 4 samples at once
         self._last_sync_time = 0
+        self._last_sync_time = time.ticks_ms()  # Set initial value
         
         # Define UUIDs
         self._SERVICE_UUID = bluetooth.UUID(config.SERVICE_UUID)
@@ -60,6 +61,7 @@ class StrengthPeripheral:
         self._command_callback = None
         self._weight_callback = None
         self._calibrate_callback = None  # New calibration callback
+        self._start_measurement_callback = None
         
         # State
         self._connections = set()
@@ -130,10 +132,20 @@ class StrengthPeripheral:
                 self.logger.info("Start measurement command")
                 self._measuring = True
                 self._measurement_start_time = time.ticks_us()
+                # Clear any stale samples
+                self._sample_buffer = []
+                # Reset sync time 
+                self._last_sync_time = time.ticks_ms()
+                # Call the start measurement callback if registered
+                if self._start_measurement_callback:
+                    self._start_measurement_callback()
             
             elif opcode == OPCODE_STOP_MEASUREMENT:
                 self.logger.info("Stop measurement command")
                 self._measuring = False
+                self._sample_buffer = []
+                # Reset the sync time when stopping measurements
+                self._last_sync_time = time.ticks_ms()
                 
             elif opcode == OPCODE_CALIBRATE:
                 # Handle calibration command
@@ -162,9 +174,12 @@ class StrengthPeripheral:
         except Exception as e:
             self.logger.error(f"Advertising error: {e}")
     
+    # In send_weight_measurement method, add debugging:
     def send_weight_measurement(self, weight_kg):
         """Send weight measurement to connected devices"""
         if not self.is_connected() or not self.is_measuring():
+            # Ensure we don't accumulate samples
+            self._sample_buffer = []
             return False
             
         try:
@@ -173,11 +188,17 @@ class StrengthPeripheral:
             
             # Add to sample buffer
             self._sample_buffer.append((weight_kg, time_delta))
+
+            # Log buffer status to see what's happening
+            self.logger.info(f"Buffer now has {len(self._sample_buffer)} samples, last sync {time.ticks_diff(time.ticks_ms(), self._last_sync_time)}ms ago. Current weight: {weight_kg} KG")
             
             # Send if buffer reaches batch size or 25ms has passed
             current_time = time.ticks_ms()
-            if (len(self._sample_buffer) >= self._batch_size or 
-                time.ticks_diff(current_time, self._last_sync_time) >= 25):
+            time_diff = time.ticks_diff(current_time, self._last_sync_time)
+            
+            if (len(self._sample_buffer) >= self._batch_size or time_diff >= 25):
+                # Log debug info
+                self.logger.info(f"Sending batch of {len(self._sample_buffer)} samples after {time_diff}ms")
                 
                 # Pack multiple samples into one notification
                 data = bytearray([RESPONSE_WEIGHT, len(self._sample_buffer)])
@@ -197,6 +218,7 @@ class StrengthPeripheral:
             return True
         except Exception as e:
             self.logger.error(f"Error sending weight: {e}")
+            self._sample_buffer = []  # Reset on error
             return False
     
     def send_battery_level(self, voltage_mv):
@@ -240,3 +262,7 @@ class StrengthPeripheral:
     def on_calibrate(self, callback):
         """Register calibration event callback"""
         self._calibrate_callback = callback
+
+    def on_start_measurement(self, callback):
+        """Register start measurement event callback"""
+        self._start_measurement_callback = callback

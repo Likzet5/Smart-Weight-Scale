@@ -53,12 +53,20 @@ def calibrate_function(known_weight_kg):
 # Command callback function
 def command_handler(opcode, value):
     # Handle specific commands if needed
+    logger.info(f"Command handler received opcode: 0x{opcode:02x}")
+    
+    # Check for start measurement command (OPCODE_START_MEASUREMENT = 0x65)
+    if opcode == 0x66:  # Using the direct value since we don't have access to the const
+        logger.info("Resetting sensor readings due to start measurement command")
+        sensor.reset_readings()
+
     pass
 
 # Register callbacks
 peripheral.on_tare(tare_function)
 peripheral.on_command(command_handler)
 peripheral.on_calibrate(calibrate_function)
+#peripheral.on_start_measurement(lambda: sensor.reset_readings())
 
 # Main loop variables
 last_sample_time = time.ticks_ms()

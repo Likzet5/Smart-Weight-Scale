@@ -129,3 +129,21 @@ class WeightSensor:
         except Exception as e:
             self.logger.error(f"Error reading raw value: {e}")
             return 0
+        
+    # Add this new method to WeightSensor class
+    def reset_readings(self):
+        """Reset any accumulated readings in the sensor"""
+        if self.simulation_mode:
+            return True
+            
+        try:
+            if self.hx711 is None:
+                return False
+                
+            self.logger.info("Resetting HX711 filtered value")    
+            # Reset the filtered value in the HX711 class
+            self.hx711.filtered = 0
+            return True
+        except Exception as e:
+            self.logger.error(f"Error resetting sensor: {e}")
+            return False
