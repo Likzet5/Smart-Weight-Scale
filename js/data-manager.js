@@ -44,9 +44,12 @@ export class DataManager {
   startRecording() {
     this.recordingStartTime = Date.now();
     this.isRecording = true;
+    this.currentForce = 0;
+    this.peakForce = 0;
     this.forceHistory = [];
-    this.rfdHistory = [];
+    this.currentRFD = 0;
     this.peakRFD = 0;
+    this.rfdHistory = [];
     return this.recordingStartTime;
   }
   
