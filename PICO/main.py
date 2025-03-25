@@ -8,7 +8,8 @@ import sys
 import config
 from logger import Logger
 from strength_peripheral import StrengthPeripheral
-from weight_sensor import WeightSensor
+#from weight_sensor import WeightSensor
+from weight_sensor_nau7802 import WeightSensor
 
 # Create logger instance
 logger = Logger()
