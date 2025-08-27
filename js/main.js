@@ -170,10 +170,12 @@ class App {
       smoothCurve: true // Use smooth curves for better visualization
     });
 
-    // After setting options, the renderer likely creates the chart instance.
-    // We need to ensure both the App and UI classes have the correct reference.
-    if (!this.chart && this.chartRenderer.chart) {
-      this.chart = this.chartRenderer.chart;
+    // After setting options, the renderer might create or re-create the chart instance.
+    // We must check if the instance has changed and update our references accordingly.
+    // This prevents holding a stale reference to a destroyed chart object.
+    const newChartInstance = this.chartRenderer.chart;
+    if (this.chart !== newChartInstance) {
+      this.chart = newChartInstance;
       this.ui.setChart(this.chart);
     }
   }
