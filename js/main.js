@@ -8,6 +8,9 @@ import { DataManager } from './data-manager.js';
 import { UI } from './ui.js';
 import { DualAxisChartRenderer } from './dual-axis-chart-renderer.js';
 
+const HZ_CHECK_INTERVAL_MS = 1000;
+const RECORDING_UPDATE_INTERVAL_MS = 100;
+
 class App {
   constructor() {
     // Initialize components
@@ -20,20 +23,20 @@ class App {
     this.ui.setChart(this.chart.chart); // Assumes .chart property exposes the Chart.js instance
     
     // Timers and intervals
+    this.isDemoMode = false;
     this.recordingInterval = null;
-    this.demoInterval = null;
     
     // Set up event listeners
     this._setupEventListeners();
     this._setupDeviceHandlers();
     
-    // Initialize UI
-    this._updateChartOptions();
+    // Initialize UI and sync settings from the DOM
+    this.updateSettings();
     this.ui.updateButtonStates();
 
     // Monitor the sample rate
     this.sampleCounter = 0;
-    this.lastHzCheck = Date.now();
+    this.lastHzCheckTime = Date.now();
   }
   
   /**
@@ -89,10 +92,10 @@ class App {
       
       // Check if a second has passed
       const now = Date.now();
-      if (now - this.lastHzCheck >= 1000) {
+      if (now - this.lastHzCheckTime >= HZ_CHECK_INTERVAL_MS) {
         console.log(`Receiving ${this.sampleCounter} samples per second`);
         this.sampleCounter = 0;
-        this.lastHzCheck = now;
+        this.lastHzCheckTime = now;
       }
       
       // Update force values
@@ -139,26 +142,39 @@ class App {
   _updateChartOptions() {
     const settings = this.ui.getSettings();
     
+    // Configure chart options using DataManager as the source of truth for data-related values
     this.chart.setOptions({
       showForce: settings.showForceLine,
       showRFD: settings.showRFDLine,
       showForceTargetLine: settings.showTargetLine,
       showRFDTargetLine: settings.showRFDTargetLine,
-      targetForce: settings.targetForce,
-      targetRFD: settings.targetRFD,
-      unit: settings.weightUnit,
+      targetForce: this.data.targetForce,
+      targetRFD: this.data.targetRFD,
+      unit: this.data.unit,
       maxTime: settings.recordDuration > 0 ? settings.recordDuration : 30, // Default to 30s for visual scaling if unlimited
-      maxForce: settings.maxForceRange,
-      maxRFD: settings.maxRFDRange,
+      maxForce: this.data.maxForceRange,
+      maxRFD: this.data.maxRFDRange,
       adaptiveScaling: true, // Always use adaptive scaling
       smoothCurve: true // Use smooth curves for better visualization
     });
-    
-    // Update data manager settings
-    this.data.targetForce = settings.targetForce;
-    this.data.maxForceRange = settings.maxForceRange;
-    this.data.maxRFDRange = settings.maxRFDRange;
-    this.data.rfdWindow = settings.rfdWindow;
+  }
+
+  /**
+   * Updates the main force and RFD displays based on current data.
+   * Consolidates UI update calls to avoid duplication.
+   * @private
+   */
+  _updateLiveDisplays() {
+    this.ui.updateForceDisplay(
+      this.data.currentForce,
+      this.data.peakForce,
+      this.data.maxForceRange
+    );
+    this.ui.updateRFDDisplay(
+      this.data.currentRFD,
+      this.data.peakRFD,
+      this.data.maxRFDRange
+    );
   }
   
   /**
@@ -216,16 +232,11 @@ class App {
    */
   async startRecording() {
     try {
-      // Reset peak values and history
-      this.data.currentForce = 0;
-      this.data.peakForce = 0;
-      this.data.forceHistory = [];
-      this.data.currentRFD = 0;
-      this.data.peakRFD = 0;
-      this.data.rfdHistory = [];
-        
-      this.ui.updateForceDisplay(this.data.currentForce, 0, this.data.maxForceRange);
-      this.ui.updateRFDDisplay(this.data.currentRFD, 0, this.data.maxRFDRange);
+      // Prepare the data manager for a new recording session.
+      // This encapsulates the logic for clearing previous session data.
+      this.data.prepareNewRecording();
+
+      this._updateLiveDisplays();
       
       // Clear the chart before starting new recording
       // this.chart.clear();
@@ -236,7 +247,7 @@ class App {
       this.ui.updateRecordingStatus(true);
       
       // Start recording on device (if not in demo mode)
-      if (!this.ui.demoMode) {
+      if (!this.isDemoMode) {
         await this.device.startMeasurement();
       }
       
@@ -246,7 +257,7 @@ class App {
         this.ui.updateRecordingTime(elapsed);
         
         // Generate demo data if in demo mode
-        if (this.ui.demoMode) {
+        if (this.isDemoMode) {
           this._generateDemoData(elapsed);
         }
         
@@ -255,7 +266,7 @@ class App {
         if (settings.recordDuration > 0 && elapsed >= settings.recordDuration) {
           this.stopRecording();
         }
-      }, 100);
+      }, RECORDING_UPDATE_INTERVAL_MS);
     } catch (error) {
       this.ui.showError("Failed to start recording: " + error.message);
     }
@@ -281,7 +292,7 @@ class App {
     this.updateStatistics();
     
     // Stop device if not in demo mode
-    if (!this.ui.demoMode && this.device.isConnected()) {
+    if (!this.isDemoMode && this.device.isConnected()) {
       try {
         await this.device.stopMeasurement();
       } catch (error) {
@@ -315,8 +326,7 @@ class App {
     
     // Update UI
     this.ui.updateRecordingTime(0);
-    this.ui.updateForceDisplay(0, 0, this.data.maxForceRange);
-    this.ui.updateRFDDisplay(0, 0, this.data.maxRFDRange);
+    this._updateLiveDisplays();
     this.ui.updateForceStats(0, 0, 0);
     this.ui.updateRFDStats(0, 0);
     
@@ -328,37 +338,22 @@ class App {
   /**
    * Toggle demo mode
    */
-  toggleDemoMode() {
-    if (this.ui.demoMode) {
-      // Stop demo mode
-      this.ui.updateDemoStatus(false);
-      
-      // Stop any ongoing recording
-      if (this.data.isRecording) {
-        this.stopRecording();
-      }
-      
-      // Stop demo data generation
-      if (this.demoInterval) {
-        clearInterval(this.demoInterval);
-        this.demoInterval = null;
-      }
-      
-      // Reset data
-      this.resetData();
-    } else {
-      // Start demo mode
-      this.ui.updateDemoStatus(true);
-      
-      // Generate data periodically if not recording
-      this.demoInterval = setInterval(() => {
-        if (!this.data.isRecording) {
-          const randomForce = Math.random() * 20;
-          const { current, peak } = this.data.updateForce(randomForce);
-          this.ui.updateForceDisplay(current, peak, this.data.maxForceRange);
-        }
-      }, 200);
+  async toggleDemoMode() {
+    this.isDemoMode = !this.isDemoMode;
+    this.ui.updateDemoStatus(this.isDemoMode);
+
+    // Stop any current activity
+    if (this.data.isRecording) {
+      await this.stopRecording();
     }
+
+    // If entering demo mode, ensure device is disconnected to avoid conflicts
+    if (this.isDemoMode && this.device.isConnected()) {
+      await this.disconnectDevice();
+    }
+
+    // Reset data to start fresh
+    this.resetData();
   }
   
   /**
@@ -412,21 +407,13 @@ class App {
     
     // Update UI
     this.ui.updateUnitDisplay(newUnit);
-    this.ui.updateForceDisplay(
-      this.data.currentForce, 
-      this.data.peakForce, 
-      this.data.maxForceRange
-    );
-    this.ui.updateRFDDisplay(
-      this.data.currentRFD,
-      this.data.peakRFD,
-      this.data.maxRFDRange
-    );
-    
+    this._updateLiveDisplays();
+
     // Update chart
+    // Update chart options with new converted values from the data model
     this._updateChartOptions();
-    this.chart.render(this.data.forceHistory, this.data.rfdHistory);
-    
+    this.chart.chart.update();
+
     // Update statistics
     this.updateStatistics();
   }
@@ -437,28 +424,20 @@ class App {
   updateSettings() {
     const settings = this.ui.getSettings();
     
-    // Update data model
+    // Update data model. This is the single source for applying UI settings to the data model.
     this.data.targetForce = settings.targetForce;
+    this.data.targetRFD = settings.targetRFD;
     this.data.maxForceRange = settings.maxForceRange;
     this.data.maxRFDRange = settings.maxRFDRange;
     this.data.rfdWindow = settings.rfdWindow;
     this.data.rfdSmoothingFactor = 0.3; // Fixed value, could be made configurable
     
-    // Update UI
-    this.ui.updateForceDisplay(
-      this.data.currentForce, 
-      this.data.peakForce, 
-      this.data.maxForceRange
-    );
-    this.ui.updateRFDDisplay(
-      this.data.currentRFD,
-      this.data.peakRFD,
-      this.data.maxRFDRange
-    );
-    
-    // Update chart
+    // Update live displays with potentially new max ranges
+    this._updateLiveDisplays();
+
+    // Update chart options and redraw
     this._updateChartOptions();
-    this.chart.render(this.data.forceHistory, this.data.rfdHistory);
+    this.chart.chart.update();
   }
 }
 

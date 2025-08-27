@@ -42,14 +42,9 @@ export class DataManager {
    * Start a new recording session
    */
   startRecording() {
+    this.reset();
     this.recordingStartTime = Date.now();
     this.isRecording = true;
-    this.currentForce = 0;
-    this.peakForce = 0;
-    this.forceHistory = [];
-    this.currentRFD = 0;
-    this.peakRFD = 0;
-    this.rfdHistory = [];
     return this.recordingStartTime;
   }
   
@@ -94,7 +89,7 @@ export class DataManager {
       return;
     }
     
-    // Method 1: Instantaneous RFD using finite difference with window
+    // Method 1: Calculate RFD using linear regression over a time window
     // Find data points within the RFD time window
     const recentPoints = [];
     for (let i = this.forceHistory.length - 1; i >= 0; i--) {
@@ -293,19 +288,13 @@ export class DataManager {
    * @returns {number} - Time to peak force in seconds
    */
   getTimeToPeak() {
-    if (this.forceHistory.length === 0) return 0;
-    
-    let maxForce = 0;
-    let maxForceTime = 0;
-    
-    for (const point of this.forceHistory) {
-      if (point.force > maxForce) {
-        maxForce = point.force;
-        maxForceTime = point.time;
-      }
-    }
-    
-    return maxForceTime;
+    if (!this.peakForce || this.forceHistory.length === 0) return 0;
+
+    // Find the data point corresponding to the peak force.
+    // this.peakForce is already tracked, so we don't need to recalculate it.
+    const peakDataPoint = this.forceHistory.find(point => point.force >= this.peakForce);
+
+    return peakDataPoint ? peakDataPoint.time : 0;
   }
   
   /**
@@ -313,19 +302,13 @@ export class DataManager {
    * @returns {number} - Time to peak RFD in seconds
    */
   getTimeToPeakRFD() {
-    if (this.rfdHistory.length === 0) return 0;
-    
-    let maxRFD = 0;
-    let maxRFDTime = 0;
-    
-    for (const point of this.rfdHistory) {
-      if (point.rfd > maxRFD) {
-        maxRFD = point.rfd;
-        maxRFDTime = point.time;
-      }
-    }
-    
-    return maxRFDTime;
+    if (!this.peakRFD || this.rfdHistory.length === 0) return 0;
+
+    // Find the data point corresponding to the peak RFD.
+    // this.peakRFD is already tracked.
+    const peakDataPoint = this.rfdHistory.find(point => point.rfd >= this.peakRFD);
+
+    return peakDataPoint ? peakDataPoint.time : 0;
   }
   
   /**
@@ -375,11 +358,8 @@ export class DataManager {
   getRFDAtForcePercentile(forcePercentile) {
     if (this.forceHistory.length === 0 || this.rfdHistory.length === 0) return 0;
     
-    // Find peak force
-    const peakForce = Math.max(...this.forceHistory.map(p => p.force));
-    
-    // Calculate target force
-    const targetForce = peakForce * forcePercentile;
+    // Calculate target force using the tracked peak force
+    const targetForce = this.peakForce * forcePercentile;
     
     // Find closest force point
     let closestPoint = null;
