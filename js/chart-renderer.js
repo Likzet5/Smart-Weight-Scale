@@ -158,7 +158,10 @@ export class ChartRenderer {
           type: "monotone", 
           dataKey: "force", 
           stroke: "#3B82F6", 
-          dot: true,
+          // Set dot to false for performance. The activeDot on hover is sufficient
+          // for interactivity and this avoids rendering hundreds of SVG elements
+          // on longer recordings.
+          dot: false,
           activeDot: { r: 8 }
         }
       ),
@@ -300,11 +303,10 @@ export class ChartRenderer {
    * Clear the chart
    */
   clear() {
-    if (this.useRecharts) {
-      ReactDOM.unmountComponentAtNode(this.container);
-    } else if (this.ctx) {
-      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    }
-    this._lastData = [];
+    // By calling render with an empty array, we ensure the chart consistently
+    // displays its "empty" state (e.g., "No data to display" message or
+    // blank axes) instead of just being wiped. This also correctly resets
+    // the internal `_lastData` state.
+    this.render([]);
   }
 }

@@ -416,131 +416,81 @@ export class DualAxisChartRenderer {
       )
     ];
     
-    // Force Y-Axis (left)
-    if (this.options.showForce) {
-      chartComponents.push(
-        React.createElement(
-          YAxis, 
-          { 
-            yAxisId: "force",
-            domain: [0, maxForce],
-            tickCount: responsiveConfig.yTickCount,
-            tick: { fontSize: responsiveConfig.fontSize, fill: this.theme.force },
-            axisLine: { stroke: this.theme.force },
-            tickLine: { stroke: this.theme.force },
-            label: responsiveConfig.showLabel ? { 
-              value: `Force (${this.options.unit})`, 
-              angle: -90, 
-              position: 'insideLeft',
-              fontSize: responsiveConfig.fontSize,
-              fill: this.theme.force
-            } : null
-          }
-        )
-      );
-      
-      // Force line
-      chartComponents.push(
-        React.createElement(
-          Line,
-          {
-            yAxisId: "force",
-            type: this.options.smoothCurve ? "monotone" : "linear",
-            dataKey: "force",
-            stroke: this.theme.force,
-            strokeWidth: responsiveConfig.strokeWidth,
-            activeDot: { r: responsiveConfig.activeDotSize },
-            dot: { r: responsiveConfig.dotSize, fill: this.theme.force },
-            name: "Force"
-          }
-        )
-      );
-      
-      // Force target line
-      if (this.options.showForceTargetLine) {
-        chartComponents.push(
-          React.createElement(
-            ReferenceLine,
-            {
-              yAxisId: "force",
-              y: this.options.targetForce,
-              stroke: this.theme.forceTarget,
-              strokeWidth: 1.5,
-              strokeDasharray: "5 5",
-              label: responsiveConfig.showLabel ? {
-                value: "Target Force",
-                position: "right",
-                fill: this.theme.forceTarget,
-                fontSize: responsiveConfig.fontSize - 1
-              } : null
-            }
-          )
-        );
+    // Helper function to generate components for an axis, reducing code duplication
+    const createAxisComponents = ({
+      axisId, dataKey, name, unit, color, targetColor,
+      orientation, max, targetValue, showTargetLine
+    }) => {
+      const components = [];
+
+      // Y-Axis
+      components.push(React.createElement(YAxis, {
+        yAxisId: axisId,
+        orientation: orientation,
+        domain: [0, max],
+        tickCount: responsiveConfig.yTickCount,
+        tick: { fontSize: responsiveConfig.fontSize, fill: color },
+        axisLine: { stroke: color },
+        tickLine: { stroke: color },
+        label: responsiveConfig.showLabel ? {
+          value: `${name} (${unit})`,
+          angle: orientation === 'right' ? 90 : -90,
+          position: orientation === 'right' ? 'insideRight' : 'insideLeft',
+          fontSize: responsiveConfig.fontSize,
+          fill: color
+        } : null
+      }));
+
+      // Data Line
+      components.push(React.createElement(Line, {
+        yAxisId: axisId,
+        type: this.options.smoothCurve ? "monotone" : "linear",
+        dataKey: dataKey,
+        stroke: color,
+        strokeWidth: responsiveConfig.strokeWidth,
+        activeDot: { r: responsiveConfig.activeDotSize },
+        dot: { r: responsiveConfig.dotSize, fill: color },
+        name: name
+      }));
+
+      // Target Line
+      if (showTargetLine) {
+        components.push(React.createElement(ReferenceLine, {
+          yAxisId: axisId,
+          y: targetValue,
+          stroke: targetColor,
+          strokeWidth: 1.5,
+          strokeDasharray: "5 5",
+          label: responsiveConfig.showLabel ? {
+            value: `Target ${name}`,
+            position: orientation === 'right' ? 'left' : 'right',
+            fill: targetColor,
+            fontSize: responsiveConfig.fontSize - 1
+          } : null
+        }));
       }
+
+      return components;
+    };
+
+    // Add Force components if enabled
+    if (this.options.showForce) {
+      chartComponents.push(...createAxisComponents({
+        axisId: 'force', dataKey: 'force', name: 'Force', unit: this.options.unit,
+        color: this.theme.force, targetColor: this.theme.forceTarget,
+        orientation: 'left', max: maxForce, targetValue: this.options.targetForce,
+        showTargetLine: this.options.showForceTargetLine
+      }));
     }
     
-    // RFD Y-Axis (right)
+    // Add RFD components if enabled
     if (this.options.showRFD) {
-      chartComponents.push(
-        React.createElement(
-          YAxis, 
-          { 
-            yAxisId: "rfd",
-            orientation: "right",
-            domain: [0, maxRFD],
-            tickCount: responsiveConfig.yTickCount,
-            tick: { fontSize: responsiveConfig.fontSize, fill: this.theme.rfd },
-            axisLine: { stroke: this.theme.rfd },
-            tickLine: { stroke: this.theme.rfd },
-            label: responsiveConfig.showLabel ? { 
-              value: `RFD (${this.options.unit}/s)`, 
-              angle: 90, 
-              position: 'insideRight',
-              fontSize: responsiveConfig.fontSize,
-              fill: this.theme.rfd
-            } : null
-          }
-        )
-      );
-      
-      // RFD line
-      chartComponents.push(
-        React.createElement(
-          Line,
-          {
-            yAxisId: "rfd",
-            type: this.options.smoothCurve ? "monotone" : "linear",
-            dataKey: "rfd",
-            stroke: this.theme.rfd,
-            strokeWidth: responsiveConfig.strokeWidth,
-            activeDot: { r: responsiveConfig.activeDotSize },
-            dot: { r: responsiveConfig.dotSize, fill: this.theme.rfd },
-            name: "RFD"
-          }
-        )
-      );
-      
-      // RFD target line
-      if (this.options.showRFDTargetLine) {
-        chartComponents.push(
-          React.createElement(
-            ReferenceLine,
-            {
-              yAxisId: "rfd",
-              y: this.options.targetRFD,
-              stroke: this.theme.rfdTarget,
-              strokeWidth: 1.5,
-              strokeDasharray: "5 5",
-              label: responsiveConfig.showLabel ? {
-                value: "Target RFD",
-                position: "left",
-                fill: this.theme.rfdTarget,
-                fontSize: responsiveConfig.fontSize - 1
-              } : null
-            }
-          )
-        );
-      }
+      chartComponents.push(...createAxisComponents({
+        axisId: 'rfd', dataKey: 'rfd', name: 'RFD', unit: `${this.options.unit}/s`,
+        color: this.theme.rfd, targetColor: this.theme.rfdTarget,
+        orientation: 'right', max: maxRFD, targetValue: this.options.targetRFD,
+        showTargetLine: this.options.showRFDTargetLine
+      }));
     }
     
     // Create responsive container with chart
@@ -574,45 +524,35 @@ export class DualAxisChartRenderer {
    * @private
    */
   _mergeDatasets(forceData, rfdData) {
-    // Create a map to hold the merged data keyed by time
     const mergedMap = new Map();
-    
-    // Add force data to map
-    if (forceData) {
-      for (const point of forceData) {
-        mergedMap.set(point.time, { time: point.time, force: point.force });
+
+    // Helper to process a dataset into the map
+    const processDataset = (dataset, key) => {
+      if (!dataset) return;
+      for (const point of dataset) {
+        const time = point.time;
+        const existing = mergedMap.get(time) || { time };
+        existing[key] = point[key];
+        mergedMap.set(time, existing);
       }
-    }
-    
-    // Add or update RFD data in map
-    if (rfdData) {
-      for (const point of rfdData) {
-        if (mergedMap.has(point.time)) {
-          // Update existing entry
-          const existing = mergedMap.get(point.time);
-          existing.rfd = point.rfd;
-        } else {
-          // Create new entry
-          mergedMap.set(point.time, { time: point.time, rfd: point.rfd });
-        }
-      }
-    }
-    
+    };
+
+    processDataset(forceData, 'force');
+    processDataset(rfdData, 'rfd');
+
     // Convert map to array and sort by time
     return Array.from(mergedMap.values()).sort((a, b) => a.time - b.time);
   }
   
   /**
-   * Clear the chart
+   * Clear the chart by rendering it in an empty state
    */
   clear() {
-    if (this.useRecharts) {
-      ReactDOM.unmountComponentAtNode(this.container);
-    } else if (this.ctx) {
-      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    }
-    this.forceData = [];
-    this.rfdData = [];
+    // By calling render with empty data, we ensure the chart consistently
+    // displays its "empty" state (e.g., "No data to display" message or
+    // blank axes) instead of just being wiped. This also correctly resets
+    // the internal data state.
+    this.render([], []);
   }
   
   /**

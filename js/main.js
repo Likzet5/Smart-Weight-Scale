@@ -257,6 +257,11 @@ class App {
       // This encapsulates the logic for clearing previous session data.
       this.data.prepareNewRecording();
 
+      // Re-sync chart options before clearing it. This is critical because
+      // data model changes (like in prepareNewRecording) can affect axis ranges,
+      // and this ensures the chart instance is fresh before we operate on it.
+      this._updateChartOptions();
+
       this._updateLiveDisplays();
       
       // Clear the chart before starting new recording
@@ -396,12 +401,14 @@ class App {
     const settings = this.ui.getSettings();
     const maxTime = settings.recordDuration > 0 ? settings.recordDuration : 30; // If unlimited, use 30s for demo curve
     const peakTime = maxTime / 2;
-    const maxTargetForce = settings.targetForce;
+    // Use the user's target force for the demo, but provide a reasonable default
+    // if it's not set. This ensures the demo works out-of-the-box.
+    const maxTargetForce = settings.targetForce > 0 ? settings.targetForce : 50;
     
     // Bell curve formula with noise
     const bellCurve = Math.exp(-Math.pow((timeSeconds - peakTime) / (maxTime / 5), 2));
-    const noise = (Math.random() - 0.5) * (maxTargetForce * 0.1);
-    const force = maxTargetForce * bellCurve + noise;
+    const noise = (Math.random() - 0.5) * (maxTargetForce * 0.05); // Reduced noise
+    const force = (maxTargetForce * bellCurve) + noise;
     
     this._processNewForceValue(force, true); // It's always recording in demo mode
   }

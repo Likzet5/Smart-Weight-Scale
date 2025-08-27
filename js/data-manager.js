@@ -42,17 +42,19 @@ export class DataManager {
    * Start a new recording session
    */
   startRecording() {
-    this.reset();
+    // The reset is now handled by prepareNewRecording to better separate concerns.
+    // This method is now non-destructive and only manages recording state.
     this.recordingStartTime = Date.now();
     this.isRecording = true;
     return this.recordingStartTime;
   }
   
   /**
-   * Alias for startRecording to prepare for a new recording session.
-   * This helps align with other parts of the application that may use this name.
+   * Resets all data and starts a new recording session.
+   * This is the primary method to call when beginning a new, clean recording.
    */
   prepareNewRecording() {
+    this.reset();
     return this.startRecording();
   }
 
@@ -195,37 +197,29 @@ export class DataManager {
     if (newUnit === this.weightUnit) return false;
     
     const oldUnit = this.weightUnit;
-    
-    // Convert current and peak force
-    this.currentForce = this.convertValue(this.currentForce, oldUnit, newUnit);
-    this.peakForce = this.convertValue(this.peakForce, oldUnit, newUnit);
-    this.targetForce = this.convertValue(this.targetForce, oldUnit, newUnit);
-    this.maxForceRange = this.convertValue(this.maxForceRange, oldUnit, newUnit);
-    
-    // Convert force history
-    if (this.forceHistory.length > 0) {
-      this.forceHistory = this.forceHistory.map(point => ({
-        time: point.time,
-        force: this.convertValue(point.force, oldUnit, newUnit)
-      }));
-    }
-    
-    // Convert RFD values (since they're in force/time, we need to convert the force part)
-    this.currentRFD = this.convertValue(this.currentRFD, oldUnit, newUnit);
-    this.peakRFD = this.convertValue(this.peakRFD, oldUnit, newUnit);
-    this.maxRFDRange = this.convertValue(this.maxRFDRange, oldUnit, newUnit);
-    
-    // Convert RFD history
-    if (this.rfdHistory.length > 0) {
-      this.rfdHistory = this.rfdHistory.map(point => ({
-        time: point.time,
-        rfd: this.convertValue(point.rfd, oldUnit, newUnit)
-      }));
-    }
-    
-    // Update current unit
+
+    // Properties that represent a force value and need conversion.
+    const forceProps = ['currentForce', 'peakForce', 'targetForce', 'maxForceRange'];
+    forceProps.forEach(prop => {
+      this[prop] = this.convertValue(this[prop], oldUnit, newUnit);
+    });
+
+    // Properties that represent a rate of force development (force/time).
+    const rfdProps = ['currentRFD', 'peakRFD', 'maxRFDRange'];
+    rfdProps.forEach(prop => {
+      this[prop] = this.convertValue(this[prop], oldUnit, newUnit);
+    });
+
+    // History arrays that contain force or RFD values.
+    this.forceHistory.forEach(point => {
+      point.force = this.convertValue(point.force, oldUnit, newUnit);
+    });
+
+    this.rfdHistory.forEach(point => {
+      point.rfd = this.convertValue(point.rfd, oldUnit, newUnit);
+    });
+
     this.weightUnit = newUnit;
-    
     return true;
   }
   
@@ -239,17 +233,27 @@ export class DataManager {
   convertValue(value, fromUnit, toUnit) {
     if (fromUnit === toUnit) return value;
     
-    const { kgToLbs, kgToN, lbsToKg, lbsToN, nToKg, nToLbs } = this.conversionFactors;
-    
-    if (fromUnit === 'kg' && toUnit === 'lbs') return value * kgToLbs;
-    if (fromUnit === 'kg' && toUnit === 'N') return value * kgToN;
-    if (fromUnit === 'lbs' && toUnit === 'kg') return value * lbsToKg;
-    if (fromUnit === 'lbs' && toUnit === 'N') return value * lbsToN;
-    if (fromUnit === 'N' && toUnit === 'kg') return value * nToKg;
-    if (fromUnit === 'N' && toUnit === 'lbs') return value * nToLbs;
-    
-    console.warn(`Unsupported unit conversion: ${fromUnit} to ${toUnit}`);
-    return value;
+    // To simplify conversions, we first convert the 'from' unit to a base unit (kg),
+    // and then from the base unit to the 'to' unit.
+    const toKg = {
+      'lbs': val => val * this.conversionFactors.lbsToKg,
+      'N':   val => val * this.conversionFactors.nToKg,
+      'kg':  val => val,
+    };
+
+    const fromKg = {
+      'lbs': val => val * this.conversionFactors.kgToLbs,
+      'N':   val => val * this.conversionFactors.kgToN,
+      'kg':  val => val,
+    };
+
+    if (!toKg[fromUnit] || !fromKg[toUnit]) {
+      console.warn(`Unsupported unit conversion from '${fromUnit}' to '${toUnit}'`);
+      return value;
+    }
+
+    const valueInKg = toKgfromUnit;
+    return fromKgtoUnit;
   }
   
   /**
