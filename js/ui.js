@@ -81,6 +81,9 @@ export class UI {
     this.mobileConnectionStatus = document.getElementById('mobile-connection-status');
     this.mobileConnectionIndicator = document.getElementById('mobile-connection-indicator');
     
+    // Demo mode button (needs to be initialized before it's referenced by mobile sync)
+    this.demoBtn = document.getElementById('demo-button');
+
     // Sync desktop/mobile buttons
     if (this.mobileConnectBtn) {
       this.mobileConnectBtn.addEventListener('click', () => {
@@ -96,7 +99,7 @@ export class UI {
     
     if (this.mobileDemoBtn) {
       this.mobileDemoBtn.addEventListener('click', () => {
-        if (this.demoBtn) this.demoBtn.click();
+        if (this.demoBtn) this.demoBtn.click(); // This now works correctly
       });
     }
     
@@ -134,9 +137,6 @@ export class UI {
     this.resetDataBtn = document.getElementById('reset-data');
     this.recordingTime = document.getElementById('recording-time');
     this.recordingIndicator = document.getElementById('recording-indicator');
-    
-    // Demo mode
-    this.demoBtn = document.getElementById('demo-button');
     
     // Settings panel
     this.weightUnit = document.getElementById('weight-unit');
