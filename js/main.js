@@ -9,7 +9,7 @@ import { UI } from './ui.js';
 import { DualAxisChartRenderer } from './dual-axis-chart-renderer.js';
 
 const HZ_CHECK_INTERVAL_MS = 1000;
-const RECORDING_UPDATE_INTERVAL_MS = 100;
+const RECORDING_UPDATE_INTERVAL_MS = 50;
 
 class App {
   constructor() {
