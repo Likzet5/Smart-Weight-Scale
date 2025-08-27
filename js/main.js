@@ -282,22 +282,18 @@ class App {
    * Stop recording session
    */
   async stopRecording() {
-    // Update UI
-    this.ui.updateRecordingStatus(false);
-    
-    // Clear recording interval
+    // Stop the timer first to prevent new data points (especially in demo mode)
+    // from arriving while we are trying to stop and finalize the recording.
+    // This prevents a potential race condition.
     if (this.recordingInterval) {
       clearInterval(this.recordingInterval);
       this.recordingInterval = null;
     }
     
-    // Stop data recording
+    // Stop the data manager's recording state
     this.data.stopRecording();
     
-    // Update statistics
-    this.updateStatistics();
-    
-    // Stop device if not in demo mode
+    // Stop the physical device from sending measurements
     if (!this.isDemoMode && this.device.isConnected()) {
       try {
         await this.device.stopMeasurement();
@@ -305,6 +301,13 @@ class App {
         this.ui.showError("Failed to stop recording: " + error.message);
       }
     }
+
+    // Now that all data flow has stopped, update the UI.
+    // This includes flushing any remaining data to the chart.
+    this.ui.updateRecordingStatus(false);
+    
+    // Calculate and display final statistics from the recorded data.
+    this.updateStatistics();
   }
   
   /**
