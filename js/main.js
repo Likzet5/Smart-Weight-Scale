@@ -158,7 +158,7 @@ class App {
       targetForce: this.data.targetForce,
       targetRFD: this.data.targetRFD,
       unit: this.data.unit,
-      maxTime: settings.recordDuration > 0 ? settings.recordDuration : 30, // Default to 30s for visual scaling if unlimited
+      maxTime: settings.recordDuration > 0 ? settings.recordDuration + 2 : 32,
       maxForce: this.data.maxForceRange,
       maxRFD: this.data.maxRFDRange,
       adaptiveScaling: true, // Always use adaptive scaling
@@ -246,7 +246,7 @@ class App {
       // Re-sync chart options before clearing it. This is critical because
       // data model changes (like in prepareNewRecording) can affect axis ranges,
       // and this ensures the chart instance is fresh before we operate on it.
-      this._updateChartOptions();
+      this.updateSettings();
 
       this._updateLiveDisplays();
       
@@ -441,9 +441,6 @@ class App {
 
     // Update chart options and redraw
     this._updateChartOptions();
-    if (this.chart && typeof this.chart.update === 'function') {
-      this.chart.update();
-    }
   }
 }
 

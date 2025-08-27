@@ -36,7 +36,7 @@ export class DualAxisChartRenderer {
         targetForce: 100,
         targetRFD: 500,
         unit: 'kg',
-        maxTime: 10,
+        maxTime: 12, // Default maxTime
         maxForce: 150,
         maxRFD: 1000,
         adaptiveScaling: true,
@@ -82,7 +82,8 @@ export class DualAxisChartRenderer {
             title: {
               display: true,
               text: 'Time (s)'
-            }
+            },
+            max: this.options.maxTime, // Set initial max time
           },
           yForce: {
             type: 'linear',
@@ -117,6 +118,7 @@ export class DualAxisChartRenderer {
    */
   setOptions(options) {
     this.options = { ...this.options, ...options };
+    this.chart.options.scales.x.max = this.options.maxTime; // Update max time
     this.chart.options.scales.yForce.title.text = `Force (${this.options.unit})`;
     this.chart.options.scales.yRFD.title.text = `RFD (${this.options.unit}/s)`;
     this.chart.update();
