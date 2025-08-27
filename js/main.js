@@ -15,6 +15,9 @@ class App {
     this.data = new DataManager();
     this.device = new TindeqDevice();
     this.chart = new DualAxisChartRenderer('chart-container');
+
+    // Connect the chart instance to the UI for batched updates
+    this.ui.setChart(this.chart.chart); // Assumes .chart property exposes the Chart.js instance
     
     // Timers and intervals
     this.recordingInterval = null;
@@ -113,7 +116,13 @@ class App {
         );
         
         // Render chart
-        this.chart.render(this.data.forceHistory, this.data.rfdHistory);
+        // OLD: this.chart.render(this.data.forceHistory, this.data.rfdHistory);
+        // NEW: Add data to the UI's buffer for batched rendering
+        this.ui.addChartDataPoint({
+          timestamp: timeSeconds,
+          force: weight,
+          rfd: currentRFD
+        });
       }
     };
     
@@ -219,7 +228,8 @@ class App {
       this.ui.updateRFDDisplay(this.data.currentRFD, 0, this.data.maxRFDRange);
       
       // Clear the chart before starting new recording
-      this.chart.clear();
+      // this.chart.clear();
+      this.ui.resetChart(); // Use the new UI method to clear chart and buffer
       
       // Start recording in data manager
       this.data.startRecording();
@@ -311,7 +321,8 @@ class App {
     this.ui.updateRFDStats(0, 0);
     
     // Clear chart
-    this.chart.clear();
+    // this.chart.clear();
+    this.ui.resetChart(); // Use the new UI method to clear chart and buffer
   }
   
   /**
@@ -380,7 +391,13 @@ class App {
     this.ui.updateRFDDisplay(currentRFD, peakRFD, this.data.maxRFDRange);
     
     // Render chart
-    this.chart.render(this.data.forceHistory, this.data.rfdHistory);
+    // OLD: this.chart.render(this.data.forceHistory, this.data.rfdHistory);
+    // NEW: Add data to the UI's buffer for batched rendering
+    this.ui.addChartDataPoint({
+      timestamp: timeSeconds,
+      force: force,
+      rfd: currentRFD
+    });
   }
   
   /**

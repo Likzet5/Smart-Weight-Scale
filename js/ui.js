@@ -17,6 +17,12 @@ export class UI {
     // Track mobile state
     this.isMobile = window.innerWidth < 768;
     
+    // Chart performance optimization
+    this.chart = null; // Reference to the chart instance
+    this.chartDataBuffer = [];
+    this.isChartUpdateScheduled = false;
+    this.CHART_UPDATE_INTERVAL_MS = 100; // 10fps update rate is plenty for live view
+
     // Add window resize listener
     window.addEventListener('resize', () => {
       const wasMobile = this.isMobile;
@@ -27,6 +33,31 @@ export class UI {
         this._updateMetricVisibility();
       }
     });
+  }
+
+  /**
+   * Sets the chart instance for batched updates.
+   * @param {object} chartInstance - The chart instance (e.g., from Chart.js)
+   */
+  setChart(chartInstance) {
+    this.chart = chartInstance;
+  }
+
+  /**
+   * Clears all data from the chart and the internal buffer.
+   */
+  resetChart() {
+    if (!this.chart) return;
+
+    // Clear the buffer
+    this.chartDataBuffer.length = 0;
+
+    // Clear the chart's data arrays
+    this.chart.data.labels = [];
+    this.chart.data.datasets.forEach((dataset) => {
+        dataset.data = [];
+    });
+    this.chart.update('none');
   }
   
   /**
@@ -325,6 +356,11 @@ export class UI {
    * @param {boolean} recording - Is recording
    */
   updateRecordingStatus(recording) {
+    // If recording is stopping, flush any remaining data to the chart to ensure it's all visible
+    if (this.recording && !recording) {
+      this.flushChartData();
+    }
+
     this.recording = recording;
     
     if (this.recordingIndicator) {
@@ -333,7 +369,59 @@ export class UI {
     
     this.updateButtonStates();
   }
-  
+
+  /**
+   * Adds a data point to the chart buffer and schedules a batched update.
+   * This should be called for every new data point during recording.
+   * @param {object} dataPoint - The data point to add, e.g., { timestamp, force, rfd }
+   */
+  addChartDataPoint(dataPoint) {
+    if (!this.chart || !this.recording) return;
+
+    this.chartDataBuffer.push(dataPoint);
+
+    if (!this.isChartUpdateScheduled) {
+      this.isChartUpdateScheduled = true;
+      setTimeout(() => this._updateChartFromBuffer(), this.CHART_UPDATE_INTERVAL_MS);
+    }
+  }
+
+  /**
+   * Forces an immediate update of the chart with any remaining data in the buffer.
+   * Ensures all data is rendered, especially at the end of a recording session.
+   */
+  flushChartData() {
+    this._updateChartFromBuffer();
+
+    // After the final flush, do a full-detail render.
+    // For Chart.js, a simple update is often enough to redraw with default animations.
+    if (this.chart) {
+      this.chart.update();
+    }
+  }
+
+  /**
+   * Processes the data buffer and updates the chart with all points in the buffer.
+   * @private
+   */
+  _updateChartFromBuffer() {
+    if (!this.chart || this.chartDataBuffer.length === 0) {
+      this.isChartUpdateScheduled = false;
+      return;
+    }
+
+    // NOTE: This assumes a Chart.js structure and that dataset 0 is force, dataset 1 is RFD.
+    // Adjust if your chart setup is different.
+    for (const point of this.chartDataBuffer) {
+      this.chart.data.labels.push(point.timestamp.toFixed(2));
+      this.chart.data.datasets[0].data.push(point.force);
+      this.chart.data.datasets[1].data.push(point.rfd);
+    }
+    this.chartDataBuffer.length = 0; // Clear the buffer
+    this.chart.update('none'); // Update chart without animation for performance
+    this.isChartUpdateScheduled = false; // Allow the next update to be scheduled
+  }
+
   /**
    * Update the force display gauges and values
    * @param {number} currentForce - Current force value
