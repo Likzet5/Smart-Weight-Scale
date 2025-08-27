@@ -356,8 +356,12 @@ class App {
     this.ui.updateForceStats(0, 0, 0);
     this.ui.updateRFDStats(0, 0);
     
-    // Clear chart
-    this.ui.resetChart(); // Use the UI method to clear chart and buffer
+    // After a full data reset, the chart must be re-configured to reflect
+    // the new state of the data model (e.g., reset axis ranges).
+    this._updateChartOptions();
+
+    // Now, clear any lingering data points from the (potentially new) chart instance.
+    this.ui.resetChart();
   }
   
   /**
