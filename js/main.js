@@ -17,9 +17,14 @@ class App {
     this.ui = new UI();
     this.data = new DataManager();
     this.device = new TindeqDevice();
-    this.chart = new DualAxisChartRenderer('chart-container');
+    // The renderer is a wrapper; we need to distinguish it from the actual chart instance it creates.
+    this.chartRenderer = new DualAxisChartRenderer('chart-container');
+    // We assume the renderer exposes the underlying Chart.js instance via a 'chart' property.
+    // This might be undefined if the chart fails to initialize.
+    this.chart = this.chartRenderer.chart;
 
     // Connect the chart instance to the UI for batched updates
+    // Pass the actual chart instance, not the renderer wrapper.
     this.ui.setChart(this.chart);
 
     // Timers and intervals
@@ -150,7 +155,7 @@ class App {
     const settings = this.ui.getSettings();
     
     // Configure chart options using DataManager as the source of truth for data-related values
-    this.chart.setOptions({
+    this.chartRenderer.setOptions({
       showForce: settings.showForceLine,
       showRFD: settings.showRFDLine,
       showForceTargetLine: settings.showTargetLine,
@@ -405,7 +410,9 @@ class App {
     // Update chart
     // Update chart options with new converted values from the data model
     this._updateChartOptions();
-    this.chart.update();
+    if (this.chart && typeof this.chart.update === 'function') {
+      this.chart.update();
+    }
 
     // Update statistics
     this.updateStatistics();
@@ -430,7 +437,9 @@ class App {
 
     // Update chart options and redraw
     this._updateChartOptions();
-    this.chart.update();
+    if (this.chart && typeof this.chart.update === 'function') {
+      this.chart.update();
+    }
   }
 }
 

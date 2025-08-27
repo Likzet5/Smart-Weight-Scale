@@ -48,7 +48,7 @@ export class UI {
    * Clears all data from the chart and the internal buffer.
    */
   resetChart() {
-    if (!this.chart || !this.chart.data) return;
+    if (!this.chart || !this.chart.data || typeof this.chart.update !== 'function') return;
 
     // Clear the buffer
     this.chartDataBuffer.length = 0;
@@ -376,7 +376,7 @@ export class UI {
 
     // After the final flush, do a full-detail render.
     // For Chart.js, a simple update is often enough to redraw with default animations.
-    if (this.chart) {
+    if (this.chart && typeof this.chart.update === 'function') {
       this.chart.update();
     }
   }
@@ -386,7 +386,7 @@ export class UI {
    * @private
    */
   _updateChartFromBuffer() {
-    if (!this.chart || !this.chart.data || this.chartDataBuffer.length === 0) {
+    if (!this.chart || !this.chart.data || typeof this.chart.update !== 'function' || this.chartDataBuffer.length === 0) {
       this.isChartUpdateScheduled = false;
       return;
     }
