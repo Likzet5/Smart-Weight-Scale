@@ -209,7 +209,9 @@
     <!-- Data Visualization (mobile optimized) -->
     <div class="bg-white rounded-xl shadow p-4 mb-4">
       <h3 class="text-lg font-medium mb-3">Data Visualization</h3>
-      <div id="chart-container" class="chart-container">
+      <!-- The container needs a defined height for Chart.js to render the canvas correctly. -->
+      <!-- We also add `relative` positioning to help Chart.js manage the canvas size. -->
+      <div id="chart-container" class="chart-container relative h-96">
         <!-- Chart will be rendered here -->
       </div>
     </div>
