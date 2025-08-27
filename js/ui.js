@@ -22,6 +22,7 @@ export class UI {
     this.chartDataBuffer = [];
     this.isChartUpdateScheduled = false;
     this.CHART_UPDATE_INTERVAL_MS = 100; // 10fps update rate is plenty for live view
+    this.messageTimeout = null; // For auto-hiding messages
 
     // Add window resize listener
     window.addEventListener('resize', () => {
@@ -155,59 +156,8 @@ export class UI {
     this.displayTab = document.getElementById('display-tab');
     this.calibrationTab = document.getElementById('calibration-tab');
 
-    // Set up tab switching for general tab
-    this.generalTabBtn.addEventListener('click', () => {
-      // Show general settings, hide others
-      this.generalSettingsTab.classList.remove('hidden');
-      this.displayTab.classList.add('hidden');
-      this.calibrationTab.classList.add('hidden');
-      
-      // Update tab button styles
-      this.generalTabBtn.classList.add('text-blue-600', 'border-blue-600');
-      this.generalTabBtn.classList.remove('text-gray-500', 'border-transparent');
-      
-      this.displayTabBtn.classList.remove('text-blue-600', 'border-blue-600');
-      this.displayTabBtn.classList.add('text-gray-500', 'border-transparent');
-      
-      this.calibrationTabBtn.classList.remove('text-blue-600', 'border-blue-600');
-      this.calibrationTabBtn.classList.add('text-gray-500', 'border-transparent');
-    });
-
-    // Set up tab switching for display tab
-    this.displayTabBtn.addEventListener('click', () => {
-      // Show display tab, hide others
-      this.generalSettingsTab.classList.add('hidden');
-      this.displayTab.classList.remove('hidden');
-      this.calibrationTab.classList.add('hidden');
-      
-      // Update tab button styles
-      this.displayTabBtn.classList.add('text-blue-600', 'border-blue-600');
-      this.displayTabBtn.classList.remove('text-gray-500', 'border-transparent');
-      
-      this.generalTabBtn.classList.remove('text-blue-600', 'border-blue-600');
-      this.generalTabBtn.classList.add('text-gray-500', 'border-transparent');
-      
-      this.calibrationTabBtn.classList.remove('text-blue-600', 'border-blue-600');
-      this.calibrationTabBtn.classList.add('text-gray-500', 'border-transparent');
-    });
-
-    // Set up tab switching for calibration tab
-    this.calibrationTabBtn.addEventListener('click', () => {
-      // Show calibration, hide others
-      this.generalSettingsTab.classList.add('hidden');
-      this.displayTab.classList.add('hidden');
-      this.calibrationTab.classList.remove('hidden');
-      
-      // Update tab button styles
-      this.calibrationTabBtn.classList.add('text-blue-600', 'border-blue-600');
-      this.calibrationTabBtn.classList.remove('text-gray-500', 'border-transparent');
-      
-      this.generalTabBtn.classList.remove('text-blue-600', 'border-blue-600');
-      this.generalTabBtn.classList.add('text-gray-500', 'border-transparent');
-      
-      this.displayTabBtn.classList.remove('text-blue-600', 'border-blue-600');
-      this.displayTabBtn.classList.add('text-gray-500', 'border-transparent');
-    });
+    // Set up tab switching logic
+    this._setupTabSwitching();
     
     // Display toggles
     this.showForceLine = document.getElementById('show-force-line');
@@ -236,6 +186,40 @@ export class UI {
     
     // Initialize display based on toggle states
     this._updateMetricVisibility();
+  }
+
+  /**
+   * Sets up the event listeners for the settings tabs in a generic way.
+   * @private
+   */
+  _setupTabSwitching() {
+    const tabs = [
+      { btn: this.generalTabBtn, panel: this.generalSettingsTab },
+      { btn: this.displayTabBtn, panel: this.displayTab },
+      { btn: this.calibrationTabBtn, panel: this.calibrationTab }
+    ];
+
+    const allBtns = tabs.map(t => t.btn);
+    const allPanels = tabs.map(t => t.panel);
+
+    tabs.forEach(activeTab => {
+      if (!activeTab.btn) return; // Skip if a button isn't found
+
+      activeTab.btn.addEventListener('click', () => {
+        // Hide all panels and deactivate all buttons
+        allPanels.forEach(panel => panel && panel.classList.add('hidden'));
+        allBtns.forEach(btn => {
+          if (!btn) return;
+          btn.classList.remove('text-blue-600', 'border-blue-600');
+          btn.classList.add('text-gray-500', 'border-transparent');
+        });
+
+        // Show the active panel and activate its button
+        if (activeTab.panel) activeTab.panel.classList.remove('hidden');
+        activeTab.btn.classList.add('text-blue-600', 'border-blue-600');
+        activeTab.btn.classList.remove('text-gray-500', 'border-transparent');
+      });
+    });
   }
   
   /**
@@ -512,18 +496,33 @@ export class UI {
   }
   
   /**
+   * Shows a message to the user, with appropriate styling for success or error.
+   * @param {string} message - The message to display.
+   * @param {boolean} isError - If true, styles the message as an error.
+   * @private
+   */
+  _showMessage(message, isError = false) {
+    if (!this.errorMessage) return;
+
+    this.errorMessage.textContent = message;
+    this.errorMessage.classList.remove('hidden', 'bg-green-500', 'bg-red-500');
+    
+    // Add a background color to distinguish success from error.
+    this.errorMessage.classList.add(isError ? 'bg-red-500' : 'bg-green-500', 'text-white');
+    
+    // Auto-hide after 5 seconds, clearing any previous timer.
+    if (this.messageTimeout) clearTimeout(this.messageTimeout);
+    this.messageTimeout = setTimeout(() => {
+      this.errorMessage.classList.add('hidden');
+    }, 5000);
+  }
+
+  /**
    * Show an error message
    * @param {string} message - Error message to display
    */
   showError(message) {
-    this.errorMessage.textContent = message;
-    this.errorMessage.classList.remove('hidden');
-    this.errorMessage.classList.add('text-white');
-    
-    // Auto hide after 5 seconds
-    setTimeout(() => {
-      this.errorMessage.classList.add('hidden');
-    }, 5000);
+    this._showMessage(message, true);
   }
   
   /**
@@ -531,14 +530,7 @@ export class UI {
    * @param {string} message - Success message to display
    */
   showSuccess(message) {
-    this.errorMessage.textContent = message;
-    this.errorMessage.classList.remove('hidden');
-    this.errorMessage.classList.add('text-white');
-    
-    // Auto hide after 5 seconds
-    setTimeout(() => {
-      this.errorMessage.classList.add('hidden');
-    }, 5000);
+    this._showMessage(message, false);
   }
   
   /**
