@@ -19,6 +19,9 @@ class App {
     this.device = new TindeqDevice();
     this.chart = new DualAxisChartRenderer('chart-container');
 
+    // Connect the chart instance to the UI for batched updates
+    this.ui.setChart(this.chart);
+
     // Timers and intervals
     this.isDemoMode = false;
     this.recordingInterval = null;
@@ -55,16 +58,21 @@ class App {
     // Demo mode
     this.ui.demoBtn.addEventListener('click', () => this.toggleDemoMode());
     
-    // Settings changes
-    this.ui.weightUnit.addEventListener('change', () => this.changeWeightUnit());
-    this.ui.maxForce.addEventListener('change', () => this.updateSettings());
-    this.ui.maxRFD.addEventListener('change', () => this.updateSettings());
-    this.ui.targetForce.addEventListener('change', () => this.updateSettings());
-    this.ui.targetRFD.addEventListener('change', () => this.updateSettings());
-    this.ui.showTarget.addEventListener('change', () => this.updateSettings());
-    this.ui.showRFDTarget.addEventListener('change', () => this.updateSettings());
-    this.ui.recordDuration.addEventListener('change', () => this.updateSettings());
-    this.ui.rfdWindowInput.addEventListener('change', () => this.updateSettings());
+    // Settings changes that trigger a full settings update
+    const settingsInputs = [
+      this.ui.maxForce, this.ui.maxRFD, this.ui.targetForce,
+      this.ui.targetRFD, this.ui.showTarget, this.ui.showRFDTarget,
+      this.ui.recordDuration, this.ui.rfdWindowInput
+    ];
+    
+    settingsInputs.forEach(input => {
+      if (input) input.addEventListener('change', () => this.updateSettings());
+    });
+
+    // Specific setting changes
+    if (this.ui.weightUnit) {
+      this.ui.weightUnit.addEventListener('change', () => this.changeWeightUnit());
+    }
   }
   
   /**
@@ -96,40 +104,42 @@ class App {
       }
       
       // Update force values
-      const { current, peak } = this.data.updateForce(weight);
-      this.ui.updateForceDisplay(
-        current, 
-        peak, 
-        this.data.maxForceRange
-      );
-      
-      // Add to history if recording
-      if (this.data.isRecording) {
-        const timeSeconds = this.data.addForceDataPoint(weight);
-        
-        // Get RFD values and update UI
-        const { current: currentRFD, peak: peakRFD } = this.data.getRFDValues();
-        this.ui.updateRFDDisplay(
-          currentRFD,
-          peakRFD,
-          this.data.maxRFDRange
-        );
-        
-        // Render chart
-        // OLD: this.chart.render(this.data.forceHistory, this.data.rfdHistory);
-        // NEW: Add data to the UI's buffer for batched rendering
-        this.ui.addChartDataPoint({
-          timestamp: timeSeconds,
-          force: weight,
-          rfd: currentRFD
-        });
-      }
+      this._processNewForceValue(weight, this.data.isRecording);
     };
     
     // Error handling
     this.device.onError = (error) => {
       this.ui.showError(error.message || "An error occurred");
     };
+  }
+
+  /**
+   * Processes a new force value, updating the data model, UI, and chart.
+   * This is the central handler for both real and demo data.
+   * @param {number} force - The new force value.
+   * @param {boolean} isRecording - Whether the app is currently recording.
+   * @private
+   */
+  _processNewForceValue(force, isRecording) {
+    // Update live data model and UI displays
+    const { current, peak } = this.data.updateForce(force);
+    this.ui.updateForceDisplay(current, peak, this.data.maxForceRange);
+
+    if (isRecording) {
+      // Add data point to history and get the timestamp
+      const timeSeconds = this.data.addForceDataPoint(force);
+      
+      // Calculate RFD and update its display
+      const { current: currentRFD, peak: peakRFD } = this.data.getRFDValues();
+      this.ui.updateRFDDisplay(currentRFD, peakRFD, this.data.maxRFDRange);
+      
+      // Add data to the UI's buffer for batched rendering
+      this.ui.addChartDataPoint({
+        timestamp: timeSeconds,
+        force: force,
+        rfd: currentRFD
+      });
+    }
   }
   
   /**
@@ -371,25 +381,7 @@ class App {
     const noise = (Math.random() - 0.5) * (maxTargetForce * 0.1);
     const force = maxTargetForce * bellCurve + noise;
     
-    // Update data and UI
-    const { current, peak } = this.data.updateForce(force);
-    this.ui.updateForceDisplay(current, peak, this.data.maxForceRange);
-    
-    // Add to history and calculate RFD
-    this.data.addForceDataPoint(force);
-    
-    // Get RFD values and update UI
-    const { current: currentRFD, peak: peakRFD } = this.data.getRFDValues();
-    this.ui.updateRFDDisplay(currentRFD, peakRFD, this.data.maxRFDRange);
-    
-    // Render chart
-    // OLD: this.chart.render(this.data.forceHistory, this.data.rfdHistory);
-    // NEW: Add data to the UI's buffer for batched rendering
-    this.ui.addChartDataPoint({
-      timestamp: timeSeconds,
-      force: force,
-      rfd: currentRFD
-    });
+    this._processNewForceValue(force, true); // It's always recording in demo mode
   }
   
   /**
