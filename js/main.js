@@ -328,7 +328,10 @@ class App {
    */
   resetData() {
     // Reset data
-    this.data.reset();
+    // Using prepareNewRecording() instead of reset() to ensure the application
+    // remains in a consistent state for the UI. The reset() method appears to
+    // cause an issue where the chart object becomes invalid for subsequent operations.
+    this.data.prepareNewRecording();
     
     // Update UI
     this.ui.updateRecordingTime(0);
