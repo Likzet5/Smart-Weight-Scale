@@ -48,7 +48,7 @@ export class UI {
    * Clears all data from the chart and the internal buffer.
    */
   resetChart() {
-    if (!this.chart) return;
+    if (!this.chart || !this.chart.data) return;
 
     // Clear the buffer
     this.chartDataBuffer.length = 0;
@@ -386,7 +386,7 @@ export class UI {
    * @private
    */
   _updateChartFromBuffer() {
-    if (!this.chart || this.chartDataBuffer.length === 0) {
+    if (!this.chart || !this.chart.data || this.chartDataBuffer.length === 0) {
       this.isChartUpdateScheduled = false;
       return;
     }

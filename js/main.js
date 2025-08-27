@@ -246,8 +246,7 @@ class App {
       this._updateLiveDisplays();
       
       // Clear the chart before starting new recording
-      this.ui.resetChart(); // Use the new UI method to clear chart and buffer
-      this.chart.clear(); // Explicitly clear the chart through the renderer
+      this.ui.resetChart(); // Use the UI method to clear chart and buffer
       
       // Start recording in data manager
       this.data.startRecording();
@@ -338,8 +337,7 @@ class App {
     this.ui.updateRFDStats(0, 0);
     
     // Clear chart
-    this.ui.resetChart(); // Use the new UI method to clear chart and buffer
-    this.chart.clear(); // Explicitly clear the chart through the renderer
+    this.ui.resetChart(); // Use the UI method to clear chart and buffer
   }
   
   /**
