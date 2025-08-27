@@ -18,9 +18,10 @@ class App {
     this.data = new DataManager();
     this.device = new TindeqDevice();
     this.chartRenderer = new DualAxisChartRenderer('chart-container');
-    // The chart instance is created and managed by the renderer.
-    // We will interact with it via setOptions, not a direct reference.
-    
+    this.chart = this.chartRenderer.chart;
+    this.ui.setChart(this.chart);
+
+
     // Timers and intervals
     this.isDemoMode = false;
     this.recordingInterval = null;
@@ -148,10 +149,6 @@ class App {
   _updateChartOptions() {
     const settings = this.ui.getSettings();
     
-    // Adaptive scaling should be OFF during recording to provide a stable time axis,
-    // but ON when not recording to frame the final data nicely.
-    const isRecording = this.data.isRecording;
-
     // Configure chart options using DataManager as the source of truth for data-related values
     this.chartRenderer.setOptions({
       showForce: settings.showForceLine,
@@ -160,11 +157,11 @@ class App {
       showRFDTargetLine: settings.showRFDTargetLine,
       targetForce: this.data.targetForce,
       targetRFD: this.data.targetRFD,
-      unit: this.data.weightUnit,
+      unit: this.data.unit,
       maxTime: settings.recordDuration > 0 ? settings.recordDuration : 30, // Default to 30s for visual scaling if unlimited
       maxForce: this.data.maxForceRange,
       maxRFD: this.data.maxRFDRange,
-      adaptiveScaling: !isRecording, // Use fixed axis during recording
+      adaptiveScaling: true, // Always use adaptive scaling
       smoothCurve: true // Use smooth curves for better visualization
     });
   }
@@ -242,18 +239,22 @@ class App {
    */
   async startRecording() {
     try {
-      // Reset data and UI elements before starting.
+      // Prepare the data manager for a new recording session.
+      // This encapsulates the logic for clearing previous session data.
       this.data.prepareNewRecording();
-      this._updateLiveDisplays();
-      this.ui.resetChart(); // Use the UI method to clear chart and buffer
-      
-      // Set the recording state in the data manager
-      this.data.startRecording();
 
-      // NOW that isRecording is true, update the chart options. This will disable
-      // adaptive scaling and set the correct fixed time axis for the recording session.
+      // Re-sync chart options before clearing it. This is critical because
+      // data model changes (like in prepareNewRecording) can affect axis ranges,
+      // and this ensures the chart instance is fresh before we operate on it.
       this._updateChartOptions();
 
+      this._updateLiveDisplays();
+      
+      // Clear the chart before starting new recording
+      this.ui.resetChart(); // Use the UI method to clear chart and buffer
+      
+      // Start recording in data manager
+      this.data.startRecording();
       this.ui.updateRecordingStatus(true);
       
       // Start recording on device (if not in demo mode)
@@ -309,10 +310,6 @@ class App {
     // Now that all data flow has stopped, update the UI.
     // This includes flushing any remaining data to the chart.
     this.ui.updateRecordingStatus(false);
-
-    // After stopping, re-run _updateChartOptions. This re-enables adaptive scaling
-    // which will cause the chart to zoom in and perfectly frame the completed dataset.
-    this._updateChartOptions();
     
     // Calculate and display final statistics from the recorded data.
     this.updateStatistics();
@@ -444,6 +441,9 @@ class App {
 
     // Update chart options and redraw
     this._updateChartOptions();
+    if (this.chart && typeof this.chart.update === 'function') {
+      this.chart.update();
+    }
   }
 }
 
