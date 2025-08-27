@@ -17,15 +17,10 @@ class App {
     this.ui = new UI();
     this.data = new DataManager();
     this.device = new TindeqDevice();
-    // The renderer is a wrapper; we need to distinguish it from the actual chart instance it creates.
     this.chartRenderer = new DualAxisChartRenderer('chart-container');
-    // We assume the renderer exposes the underlying Chart.js instance via a 'chart' property.
-    // This might be undefined if the chart fails to initialize.
-    this.chart = this.chartRenderer.chart;
-
-    // Connect the chart instance to the UI for batched updates
-    // Pass the actual chart instance, not the renderer wrapper.
-    this.ui.setChart(this.chart);
+    // The chart instance is created by the renderer later, so we initialize it as null.
+    // It will be passed to the UI component inside _updateChartOptions once it's created.
+    this.chart = null;
 
     // Timers and intervals
     this.isDemoMode = false;
