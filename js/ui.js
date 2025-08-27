@@ -269,26 +269,25 @@ export class UI {
    */
   updateConnectionStatus(connected, deviceName = null) {
     this.connected = connected;
-    
-    // Update desktop status
-    if (this.connectionStatus) {
-      this.connectionStatus.textContent = connected ? "Connected" : "Not Connected";
-      this.connectionIndicator.classList.toggle("bg-red-500", !connected);
-      this.connectionIndicator.classList.toggle("bg-green-500", connected);
-      
-      if (deviceName && this.deviceName) {
-        this.deviceName.textContent = deviceName;
-        this.deviceName.classList.toggle("hidden", !connected);
+
+    const statusElements = [
+      { status: this.connectionStatus, indicator: this.connectionIndicator },
+      { status: this.mobileConnectionStatus, indicator: this.mobileConnectionIndicator }
+    ];
+
+    statusElements.forEach(({ status, indicator }) => {
+      if (status) status.textContent = connected ? "Connected" : "Not Connected";
+      if (indicator) {
+        indicator.classList.toggle("bg-red-500", !connected);
+        indicator.classList.toggle("bg-green-500", connected);
       }
+    });
+
+    if (deviceName && this.deviceName) {
+      this.deviceName.textContent = deviceName;
+      this.deviceName.classList.toggle("hidden", !connected);
     }
-    
-    // Update mobile status
-    if (this.mobileConnectionStatus) {
-      this.mobileConnectionStatus.textContent = connected ? "Connected" : "Not Connected";
-      this.mobileConnectionIndicator.classList.toggle("bg-red-500", !connected);
-      this.mobileConnectionIndicator.classList.toggle("bg-green-500", connected);
-    }
-    
+
     // Update button states
     this.updateButtonStates();
   }
@@ -299,37 +298,35 @@ export class UI {
    */
   updateDemoStatus(enabled) {
     this.demoMode = enabled;
-    
-    // Update desktop button
-    if (this.demoBtn) {
-      this.demoBtn.textContent = enabled ? "Stop Demo" : "Demo";
-      this.demoBtn.classList.toggle("bg-purple-600", !enabled);
-      this.demoBtn.classList.toggle("hover:bg-purple-700", !enabled);
-      this.demoBtn.classList.toggle("bg-red-600", enabled);
-      this.demoBtn.classList.toggle("hover:bg-red-700", enabled);
-    }
-    
-    // Update mobile button
-    if (this.mobileDemoBtn) {
-      this.mobileDemoBtn.textContent = enabled ? "Stop Demo" : "Demo";
-      this.mobileDemoBtn.classList.toggle("bg-purple-600", !enabled);
-      this.mobileDemoBtn.classList.toggle("hover:bg-purple-700", !enabled);
-      this.mobileDemoBtn.classList.toggle("bg-red-600", enabled);
-      this.mobileDemoBtn.classList.toggle("hover:bg-red-700", enabled);
-    }
-    
+
+    const demoButtons = [this.demoBtn, this.mobileDemoBtn];
+    demoButtons.forEach(btn => {
+      if (btn) {
+        btn.textContent = enabled ? "Stop Demo" : "Demo";
+        btn.classList.toggle("bg-purple-600", !enabled);
+        btn.classList.toggle("hover:bg-purple-700", !enabled);
+        btn.classList.toggle("bg-red-600", enabled);
+        btn.classList.toggle("hover:bg-red-700", enabled);
+      }
+    });
+
     // Update status indicators
     if (enabled) {
-      if (this.connectionStatus) this.connectionStatus.textContent = "Demo Mode";
-      if (this.mobileConnectionStatus) this.mobileConnectionStatus.textContent = "Demo Mode";
-      
-      if (this.connectionIndicator) this.connectionIndicator.classList.remove("bg-red-500");
-      if (this.connectionIndicator) this.connectionIndicator.classList.add("bg-green-500");
-      
-      if (this.mobileConnectionIndicator) this.mobileConnectionIndicator.classList.remove("bg-red-500");
-      if (this.mobileConnectionIndicator) this.mobileConnectionIndicator.classList.add("bg-green-500");
+      const statusDisplays = [
+        { status: this.connectionStatus, indicator: this.connectionIndicator },
+        { status: this.mobileConnectionStatus, indicator: this.mobileConnectionIndicator }
+      ];
+
+      for (const display of statusDisplays) {
+        if (display.status) display.status.textContent = "Demo Mode";
+        if (display.indicator) {
+          display.indicator.classList.remove("bg-red-500");
+          display.indicator.classList.add("bg-green-500");
+        }
+      }
     } else {
-      this.updateConnectionStatus(false);
+      // When demo mode is turned off, revert to the actual connection status.
+      this.updateConnectionStatus(this.connected);
     }
     
     this.updateButtonStates();

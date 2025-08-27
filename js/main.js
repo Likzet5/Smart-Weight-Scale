@@ -19,9 +19,6 @@ class App {
     this.device = new TindeqDevice();
     this.chart = new DualAxisChartRenderer('chart-container');
 
-    // Connect the chart instance to the UI for batched updates
-    this.ui.setChart(this.chart.chart); // Assumes .chart property exposes the Chart.js instance
-    
     // Timers and intervals
     this.isDemoMode = false;
     this.recordingInterval = null;
@@ -239,8 +236,8 @@ class App {
       this._updateLiveDisplays();
       
       // Clear the chart before starting new recording
-      // this.chart.clear();
       this.ui.resetChart(); // Use the new UI method to clear chart and buffer
+      this.chart.clear(); // Explicitly clear the chart through the renderer
       
       // Start recording in data manager
       this.data.startRecording();
@@ -331,8 +328,8 @@ class App {
     this.ui.updateRFDStats(0, 0);
     
     // Clear chart
-    // this.chart.clear();
     this.ui.resetChart(); // Use the new UI method to clear chart and buffer
+    this.chart.clear(); // Explicitly clear the chart through the renderer
   }
   
   /**
@@ -412,7 +409,7 @@ class App {
     // Update chart
     // Update chart options with new converted values from the data model
     this._updateChartOptions();
-    this.chart.chart.update();
+    this.chart.update();
 
     // Update statistics
     this.updateStatistics();
@@ -437,7 +434,7 @@ class App {
 
     // Update chart options and redraw
     this._updateChartOptions();
-    this.chart.chart.update();
+    this.chart.update();
   }
 }
 
