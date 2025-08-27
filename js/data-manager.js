@@ -49,6 +49,14 @@ export class DataManager {
   }
   
   /**
+   * Alias for startRecording to prepare for a new recording session.
+   * This helps align with other parts of the application that may use this name.
+   */
+  prepareNewRecording() {
+    return this.startRecording();
+  }
+
+  /**
    * Stop the current recording session
    */
   stopRecording() {
