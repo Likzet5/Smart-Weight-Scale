@@ -394,10 +394,10 @@ export class UI {
     // NOTE: This assumes a Chart.js structure and that dataset 0 is force, dataset 1 is RFD.
     // Adjust if your chart setup is different.
     for (const point of this.chartDataBuffer) {
-      this.chart.data.labels.push(point.timestamp.toFixed(2));
-      this.chart.data.datasets[0].data.push(point.force);
-      this.chart.data.datasets[1].data.push(point.rfd);
-    }
+        this.chart.data.labels.push(point.timestamp.toFixed(2));
+        this.chart.data.datasets[0].data.push(point.force);
+        this.chart.data.datasets[1].data.push(point.rfd);
+      }
     this.chartDataBuffer.length = 0; // Clear the buffer
     this.chart.update('none'); // Update chart without animation for performance
     this.isChartUpdateScheduled = false; // Allow the next update to be scheduled

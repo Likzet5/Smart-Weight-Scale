@@ -18,9 +18,9 @@ class App {
     this.data = new DataManager();
     this.device = new TindeqDevice();
     this.chartRenderer = new DualAxisChartRenderer('chart-container');
-    // The chart instance is created by the renderer later, so we initialize it as null.
-    // It will be passed to the UI component inside _updateChartOptions once it's created.
-    this.chart = null;
+    this.chart = this.chartRenderer.chart;
+    this.ui.setChart(this.chart);
+
 
     // Timers and intervals
     this.isDemoMode = false;
@@ -164,15 +164,6 @@ class App {
       adaptiveScaling: true, // Always use adaptive scaling
       smoothCurve: true // Use smooth curves for better visualization
     });
-
-    // After setting options, the renderer might create or re-create the chart instance.
-    // We must check if the instance has changed and update our references accordingly.
-    // This prevents holding a stale reference to a destroyed chart object.
-    const newChartInstance = this.chartRenderer.chart;
-    if (this.chart !== newChartInstance) {
-      this.chart = newChartInstance;
-      this.ui.setChart(this.chart);
-    }
   }
 
   /**
@@ -425,9 +416,7 @@ class App {
     // Update chart
     // Update chart options with new converted values from the data model
     this._updateChartOptions();
-    if (this.chart && typeof this.chart.update === 'function') {
-      this.chart.update();
-    }
+
 
     // Update statistics
     this.updateStatistics();
